@@ -1,0 +1,16 @@
+<!-- VYOMA Logo — Geometric symbol: orbital V + ECG pulse -->
+<!-- Primary version: Navy + Teal on White background -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 48" fill="none">
+  <!-- Symbol: orbital V with ECG pulse -->
+  <g transform="translate(4, 4)">
+    <!-- Outer orbital ring (partial) -->
+    <circle cx="20" cy="20" r="17" stroke="#2A9D8F" stroke-width="1.5" stroke-dasharray="68 38" stroke-linecap="round" transform="rotate(-30 20 20)"/>
+    <!-- V-frame legs -->
+    <path d="M10 10 L20 32 L30 10" stroke="#16324F" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- ECG pulse horizontal bar -->
+    <path d="M12 21 L15.5 21 L17.5 17 L19 23.5 L20.5 19 L22 21 L28 21" stroke="#2A9D8F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <!-- Wordmark -->
+  <text x="52" y="24" font-family="'Space Grotesk', system-ui, sans-serif" font-size="15" font-weight="700" letter-spacing="0.14em" fill="#16324F">VYOMA</text>
+  <text x="52" y="38" font-family="'Space Grotesk', system-ui, sans-serif" font-size="9" font-weight="600" letter-spacing="0.22em" fill="#2A9D8F">SPACE HEALTH</text>
+</svg>

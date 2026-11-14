@@ -1,0 +1,213 @@
+/* ── Google Fonts ── */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── CSS Brand Variables ── */
+:root {
+  --color-navy:    #16324F;
+  --color-teal:    #2A9D8F;
+  --color-white:   #FFFFFF;
+  --color-navy-10: rgba(22,50,79,0.10);
+  --color-navy-06: rgba(22,50,79,0.06);
+  --color-teal-15: rgba(42,157,143,0.15);
+  --color-teal-10: rgba(42,157,143,0.10);
+  --sidebar-width: 256px;
+}
+
+@layer base {
+  html, body, #root { min-height: 100%; }
+
+  body {
+    @apply bg-white text-ink font-body antialiased;
+    font-feature-settings: 'kern' 1, 'liga' 1;
+  }
+
+  h1, h2, h3, h4, h5 { @apply font-display text-ink; }
+
+  :focus-visible {
+    outline: 2px solid var(--color-teal);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #B0C4D8; border-radius: 8px; }
+  ::-webkit-scrollbar-thumb:hover { background: #3A5570; }
+
+  [data-reduce-motion='true'] *,
+  [data-reduce-motion='true'] *::before {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  ::selection { background: var(--color-teal-15); color: var(--color-navy); }
+}
+
+@layer components {
+
+  /* ══════════════════════════════════════════
+     SURFACES
+  ══════════════════════════════════════════ */
+  .card {
+    @apply bg-white border border-line rounded-xl shadow-card;
+  }
+  .card-inset {
+    @apply bg-offwhite border border-line/70 rounded-lg;
+  }
+  .card-raised {
+    @apply bg-white border border-line rounded-xl shadow-card-md;
+  }
+  .card-navy {
+    @apply bg-navy text-white border border-navy-dark rounded-xl;
+  }
+
+  /* ══════════════════════════════════════════
+     TYPOGRAPHY
+  ══════════════════════════════════════════ */
+  .label {
+    @apply text-[10px] font-semibold text-muted tracking-[0.12em] uppercase;
+  }
+  .label-sm {
+    @apply text-[11px] font-medium text-muted uppercase tracking-wider;
+  }
+  .num {
+    @apply font-mono tabular-nums;
+  }
+  .caption {
+    @apply text-xs text-muted;
+  }
+  .section-title {
+    @apply font-display text-sm font-semibold text-ink;
+  }
+  .page-title {
+    @apply font-display text-xl font-bold text-ink tracking-tight sm:text-2xl;
+  }
+
+  /* ══════════════════════════════════════════
+     BUTTONS
+  ══════════════════════════════════════════ */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold
+           transition-all duration-150
+           disabled:opacity-40 disabled:cursor-not-allowed
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white;
+  }
+  .btn-primary {
+    @apply btn bg-teal text-white hover:bg-teal-dark active:scale-[0.98] shadow-sm;
+  }
+  .btn-secondary {
+    @apply btn bg-navy text-white hover:bg-navy-light active:scale-[0.98] shadow-sm;
+  }
+  .btn-ghost {
+    @apply btn border border-line text-body hover:bg-offwhite hover:border-line hover:text-ink active:scale-[0.98];
+  }
+  .btn-teal-outline {
+    @apply btn border border-teal/40 text-teal hover:bg-teal/5 active:scale-[0.98];
+  }
+  .btn-danger {
+    @apply btn border border-crit/30 text-crit hover:bg-crit/5 active:scale-[0.98];
+  }
+  .btn-sm {
+    @apply btn text-xs px-3 py-1.5 rounded-md;
+  }
+  .btn-xs {
+    @apply btn text-xs px-2.5 py-1 rounded;
+  }
+
+  /* ══════════════════════════════════════════
+     FORM CONTROLS
+  ══════════════════════════════════════════ */
+  .input {
+    @apply w-full rounded-lg bg-white border border-line px-3 py-2 text-sm text-ink
+           placeholder:text-dim
+           focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/15
+           transition-colors duration-150;
+  }
+  .input-sm {
+    @apply input text-xs px-2.5 py-1.5;
+  }
+
+  /* ══════════════════════════════════════════
+     CHIPS / FILTER PILLS
+  ══════════════════════════════════════════ */
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-semibold transition-all duration-150;
+  }
+  .chip-on {
+    @apply bg-teal/10 border-teal/40 text-teal-dark;
+  }
+  .chip-off {
+    @apply border-line text-muted hover:text-ink hover:bg-offwhite hover:border-line cursor-pointer;
+  }
+
+  /* ══════════════════════════════════════════
+     PROGRESS BARS
+  ══════════════════════════════════════════ */
+  .progress-bar {
+    @apply h-1.5 rounded-full bg-ghost overflow-hidden;
+  }
+  .progress-fill {
+    @apply h-full rounded-full transition-all duration-700 ease-out;
+  }
+
+  /* ══════════════════════════════════════════
+     STATUS DOTS
+  ══════════════════════════════════════════ */
+  .dot-ok   { @apply inline-block h-2 w-2 rounded-full bg-teal; }
+  .dot-warn { @apply inline-block h-2 w-2 rounded-full bg-warn; }
+  .dot-crit { @apply inline-block h-2 w-2 rounded-full bg-crit animate-pulseDot; }
+  .dot-info { @apply inline-block h-2 w-2 rounded-full bg-info; }
+
+  /* ══════════════════════════════════════════
+     DIVIDERS
+  ══════════════════════════════════════════ */
+  .divider   { @apply border-t border-line; }
+  .divider-v { @apply border-l border-line; }
+
+  /* ══════════════════════════════════════════
+     DATA ROWS (console-style)
+  ══════════════════════════════════════════ */
+  .data-row {
+    @apply flex items-center justify-between gap-3 py-2.5 border-b border-line/60 last:border-0;
+  }
+  .data-label { @apply text-xs text-muted; }
+  .data-value { @apply num text-sm font-semibold text-ink; }
+
+  /* ══════════════════════════════════════════
+     ALERTS (severity variants)
+  ══════════════════════════════════════════ */
+  .alert-crit { @apply border-l-4 border-crit bg-crit/[0.03]; }
+  .alert-warn { @apply border-l-4 border-warn bg-warn/[0.03]; }
+  .alert-info { @apply border-l-4 border-info bg-info/[0.03]; }
+  .alert-ok   { @apply border-l-4 border-teal bg-teal/[0.03]; }
+
+  /* ══════════════════════════════════════════
+     NAV ITEMS (sidebar)
+  ══════════════════════════════════════════ */
+  .nav-item {
+    @apply flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg
+           transition-all duration-150 cursor-pointer;
+  }
+  .nav-active {
+    @apply bg-white/15 text-white;
+  }
+  .nav-inactive {
+    @apply text-white/60 hover:text-white/90 hover:bg-white/8;
+  }
+
+  /* ══════════════════════════════════════════
+     PAGE HEADER
+  ══════════════════════════════════════════ */
+  .page-header {
+    @apply flex flex-wrap items-end justify-between gap-3 pb-5 mb-6 border-b border-line;
+  }
+
+  /* ══════════════════════════════════════════
+     ANIMATIONS
+  ══════════════════════════════════════════ */
+  .animate-page { animation: page 0.22s ease-out; }
+}
