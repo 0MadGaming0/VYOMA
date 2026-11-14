@@ -565,6 +565,7 @@ export default function VitalWatch() {
             <EmptyState
               title={`No ${activeMetricCfg.label} Telemetry in Selected Window`}
               hint={`No readings recorded for the ${range} time filter. Try selecting 24H, 7D, or 30D, or record new vitals.`}
+              variant="data"
             />
           ) : (
             <ResponsiveContainer width="100%" height="100%">
@@ -685,6 +686,7 @@ export default function VitalWatch() {
           <EmptyState
             title="No Abnormal Telemetry"
             hint="All recorded physiological vitals for this astronaut are within nominal flight safety thresholds."
+            variant="alerts"
           />
         ) : (
           <DataTable columns={cols} rows={displayedRows} />

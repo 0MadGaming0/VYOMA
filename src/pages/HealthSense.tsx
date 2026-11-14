@@ -531,6 +531,7 @@ export default function HealthSense() {
           <EmptyState
             title="No Physiological Deviations Detected"
             hint="All 6 monitored physiological parameters are currently within normal baseline thresholds."
+            variant="alerts"
           />
         ) : (
           <ul className="space-y-3">
@@ -712,6 +713,7 @@ export default function HealthSense() {
             <EmptyState
               title="Insufficient Historical Telemetry Data"
               hint="Historical trends will be graphed as vital telemetry records are logged in PostgreSQL."
+              variant="data"
             />
           ) : (
             <ResponsiveContainer width="100%" height="100%">

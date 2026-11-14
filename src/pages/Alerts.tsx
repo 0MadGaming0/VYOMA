@@ -222,6 +222,7 @@ export default function Alerts() {
           <EmptyState
             title={status === 'OPEN' ? 'No Open Alerts' : 'No Records in this Filter'}
             hint="All clinical and telemetry alarms have been resolved or nominal bounds restored."
+            variant="alerts"
           />
         </div>
       ) : (

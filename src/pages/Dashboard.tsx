@@ -246,15 +246,27 @@ export default function Dashboard() {
           </p>
         </div>
 
-        {/* Astronaut Quick Identity Card */}
-        <div className="flex items-center gap-3 bg-white rounded-xl border border-line p-3 shadow-card">
-          <div className="grid h-10 w-10 place-items-center rounded-lg bg-teal/10 border border-teal/20 text-teal-dark font-display font-bold">
-            {astronautCode.replace('AST-', '') || '01'}
+        {/* Astronaut Quick Identity Card + Hero Image */}
+        <div className="flex items-stretch gap-3">
+          {/* Identity card */}
+          <div className="flex items-center gap-3 bg-white rounded-xl border border-line p-3 shadow-card">
+            <div className="grid h-10 w-10 place-items-center rounded-lg bg-teal/10 border border-teal/20 text-teal-dark font-display font-bold">
+              {astronautCode.replace('AST-', '') || '01'}
+            </div>
+            <div>
+              <p className="text-[11px] uppercase font-bold tracking-wider text-muted">Active Subject</p>
+              <p className="text-sm font-bold text-ink truncate max-w-[160px]">{astronautName}</p>
+              <p className="text-[11px] font-mono text-muted">{astronautCode}</p>
+            </div>
           </div>
-          <div>
-            <p className="text-[11px] uppercase font-bold tracking-wider text-muted">Active Subject</p>
-            <p className="text-sm font-bold text-ink truncate max-w-[160px]">{astronautName}</p>
-            <p className="text-[11px] font-mono text-muted">{astronautCode}</p>
+          {/* Hero illustration */}
+          <div className="hidden sm:block relative w-32 lg:w-44 rounded-xl overflow-hidden border border-line shadow-card shrink-0">
+            <img
+              src="/assets/dashboard-hero.jpg"
+              alt="Astronaut in orbit"
+              className="absolute inset-0 h-full w-full object-cover object-top"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-navy/60 via-transparent to-transparent" />
           </div>
         </div>
       </header>
@@ -373,6 +385,7 @@ export default function Dashboard() {
           <EmptyState
             title="No Active Alerts"
             hint="All monitored physiological parameters are currently within baseline thresholds."
+            variant="alerts"
           />
         ) : (
           <div className="grid gap-3 md:grid-cols-2">
@@ -469,6 +482,7 @@ export default function Dashboard() {
             <EmptyState
               title="No Historical Readings"
               hint="Historical trends will be graphed as telemetry readings are logged."
+              variant="data"
             />
           ) : (
             <ResponsiveContainer width="100%" height="100%">
@@ -518,6 +532,28 @@ export default function Dashboard() {
             </ResponsiveContainer>
           )}
         </ChartCard>
+      </section>
+
+      {/* ── Project Overview Banner ── */}
+      <section
+        aria-label="About VYOMA"
+        className="relative overflow-hidden rounded-2xl border border-line shadow-card min-h-[180px] flex items-end"
+      >
+        <img
+          src="/assets/about-bg.jpg"
+          alt="Orbital medical bay"
+          className="absolute inset-0 h-full w-full object-cover object-center"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-navy/90 via-navy/70 to-navy/20" />
+        <div className="relative z-10 p-6 md:p-8 max-w-lg">
+          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-teal-soft mb-1">About VYOMA</p>
+          <h2 className="font-display text-lg font-bold text-white leading-snug mb-2">
+            Space Health Intelligence for Long-Duration Missions
+          </h2>
+          <p className="text-sm text-white/65 leading-relaxed">
+            VYOMA continuously monitors astronaut physiology, detects deviations from individual baselines, and supports flight medical teams with evidence-based triage — keeping crews safe across extended spaceflight.
+          </p>
+        </div>
       </section>
     </div>
   );

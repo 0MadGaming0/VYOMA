@@ -111,8 +111,40 @@ export default function Login() {
   };
 
   return (
-    <div className="grid min-h-screen place-items-center bg-offwhite px-4 py-8">
-      <div className="w-full max-w-sm">
+    <div className="relative flex min-h-screen bg-navy">
+      {/* Left panel — cinematic background (hidden on mobile) */}
+      <div className="relative hidden lg:flex lg:w-[58%] xl:w-[62%] flex-col overflow-hidden">
+        <img
+          src="/assets/login-bg.jpg"
+          alt="Astronaut at health monitoring console in space station"
+          className="absolute inset-0 h-full w-full object-cover object-center"
+        />
+        {/* Dark overlay gradient for readability */}
+        <div className="absolute inset-0 bg-gradient-to-r from-navy/80 via-navy/40 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-navy/70 via-transparent to-transparent" />
+        {/* Branding overlay */}
+        <div className="relative z-10 flex h-full flex-col justify-between p-10">
+          <div className="flex items-center gap-3">
+            <VyomaLogo size={36} />
+            <div>
+              <span className="font-display text-base font-bold tracking-[0.16em] text-white block">VYOMA</span>
+              <span className="font-display text-[11px] font-semibold tracking-[0.22em] text-teal-soft block">SPACE HEALTH</span>
+            </div>
+          </div>
+          <div>
+            <p className="font-display text-3xl font-bold text-white leading-snug mb-2">
+              Astronaut Health<br />Intelligence System
+            </p>
+            <p className="text-sm text-white/60 max-w-sm leading-relaxed">
+              Real-time physiological monitoring and triage support for long-duration spaceflight crews.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Right panel — form */}
+      <div className="flex flex-1 flex-col items-center justify-center bg-offwhite px-6 py-10 lg:overflow-y-auto">
+        <div className="w-full max-w-sm">
         {/* Terminal Card */}
         <div className="card p-7 shadow-card-lg animate-fadeUp">
 
@@ -365,6 +397,7 @@ export default function Login() {
             </form>
           )}
         </div>
+      </div>
       </div>
     </div>
   );
