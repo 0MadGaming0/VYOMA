@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
-  AlertTriangle, Bot, Brain, LayoutDashboard, RefreshCw,
-  ShieldCheck, SlidersHorizontal, Sparkles, X,
-  type LucideIcon, Activity, Orbit, ChevronDown, Rocket,
-  PanelLeftClose, PanelLeft,
+  AlertTriangle, LayoutDashboard,
+  SlidersHorizontal, Sparkles, X,
+  type LucideIcon, Activity, Orbit, Rocket,
+  PanelLeftClose, PanelLeft, Settings2,
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { mission } from '../../data/mockData';
@@ -24,47 +24,46 @@ interface NavSection {
   items: NavItem[];
 }
 
+// Primary navigation — 4 active modules
 const navSections: NavSection[] = [
   {
-    id: 'dashboard',
-    title: 'Dashboard',
+    id: 'overview',
+    title: 'OVERVIEW',
     items: [
       { to: '/', label: 'Dashboard', shortLabel: 'Overview', icon: LayoutDashboard, end: true },
     ],
   },
   {
     id: 'health',
-    title: 'Health Monitoring',
+    title: 'HEALTH MONITORING',
     items: [
       { to: '/vitalwatch', label: 'VitalWatch', icon: Activity },
       { to: '/healthsense', label: 'HealthSense AI', shortLabel: 'HealthSense', icon: Sparkles },
     ],
   },
   {
-    id: 'wellness',
-    title: 'Wellness & Support',
-    items: [
-      { to: '/mindspace', label: 'MindSpace', icon: Brain },
-      { to: '/astroassist', label: 'AstroAssist', icon: Bot },
-    ],
-  },
-  {
     id: 'safety',
-    title: 'Safety & Alerts',
+    title: 'SAFETY',
     items: [
-      { to: '/spaceguard', label: 'SpaceGuard', icon: ShieldCheck },
       { to: '/alerts', label: 'Alerts & Triage', shortLabel: 'Alerts', icon: AlertTriangle },
     ],
   },
-  {
-    id: 'system',
-    title: 'System Management',
-    items: [
-      { to: '/missionsync', label: 'MissionSync', icon: RefreshCw },
-      { to: '/settings', label: 'Bio-Calibration', shortLabel: 'Settings', icon: SlidersHorizontal },
-    ],
-  },
 ];
+
+// Settings section — rendered separately at the bottom of nav
+const settingsSection: NavSection = {
+  id: 'settings',
+  title: 'SETTINGS',
+  items: [
+    { to: '/settings', label: 'Bio-Calibration', shortLabel: 'Settings', icon: SlidersHorizontal },
+  ],
+};
+
+// Hidden modules — routes/code preserved, just not shown in sidebar
+// { to: '/mindspace', label: 'MindSpace', icon: Brain },
+// { to: '/astroassist', label: 'AstroAssist', icon: Bot },
+// { to: '/spaceguard', label: 'SpaceGuard', icon: ShieldCheck },
+// { to: '/missionsync', label: 'MissionSync', icon: RefreshCw },
 
 /** Standalone logo symbol (SVG inline) */
 function VyomaSymbol({ size = 28 }: { size?: number }) {
@@ -102,11 +101,10 @@ export default function Sidebar({ open, onClose }: { open: boolean; onClose: () 
       // fallback
     }
     return {
-      dashboard: true,
+      overview: true,
       health: true,
-      wellness: true,
       safety: true,
-      system: true,
+      settings: false,
     };
   });
 
@@ -220,51 +218,33 @@ export default function Sidebar({ open, onClose }: { open: boolean; onClose: () 
           </div>
         </div>
 
-        {/* ── 5-Section Navigation Hub ── */}
+        {/* ── Navigation ── */}
         <nav
-          className="flex-1 overflow-y-auto px-2 py-3 space-y-3 scrollbar-thin scrollbar-thumb-white/10"
-          aria-label="OrbitCare 5-Section Menu"
+          className="flex-1 overflow-y-auto px-2 py-3 space-y-4 scrollbar-thin scrollbar-thumb-white/10"
+          aria-label="VYOMA Primary Navigation"
         >
+          {/* Primary sections */}
           {navSections.map((section) => {
-            const isGroupOpen = sectionOpen[section.id] ?? true;
             const hasActiveChild = section.items.some((item) =>
               item.end ? location.pathname === item.to : location.pathname.startsWith(item.to)
             );
 
             return (
-              <div key={section.id} className="space-y-1">
-                {/* Section Header (Desktop Expanded / Mobile) */}
-                <div className={cx('px-2', sidebarCollapsed ? 'lg:hidden' : 'block')}>
-                  {section.id === 'dashboard' ? (
-                    // Dashboard has no accordion header, renders item directly
-                    null
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => toggleSection(section.id)}
-                      className="flex w-full items-center justify-between py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white/45 hover:text-white/80 transition-colors"
-                      aria-expanded={isGroupOpen}
-                    >
-                      <span className={cx(hasActiveChild && 'text-teal-soft font-semibold')}>{section.title}</span>
-                      <ChevronDown
-                        className={cx(
-                          'h-3 w-3 text-white/40 transition-transform duration-150',
-                          isGroupOpen ? 'rotate-0' : '-rotate-90'
-                        )}
-                        aria-hidden
-                      />
-                    </button>
-                  )}
+              <div key={section.id} className="space-y-0.5">
+                {/* Section Label */}
+                <div className={cx('px-2 pb-1', sidebarCollapsed ? 'lg:hidden' : 'block')}>
+                  <span
+                    className={cx(
+                      'text-[9px] font-bold tracking-[0.18em] uppercase',
+                      hasActiveChild ? 'text-teal-soft' : 'text-white/35'
+                    )}
+                  >
+                    {section.title}
+                  </span>
                 </div>
 
                 {/* Section Items */}
-                <ul
-                  className={cx(
-                    'space-y-0.5',
-                    sidebarCollapsed ? 'block' : section.id !== 'dashboard' && !isGroupOpen ? 'hidden' : 'block'
-                  )}
-                  role="menu"
-                >
+                <ul className="space-y-0.5" role="menu">
                   {section.items.map(({ to, label, icon: Icon, end }) => {
                     const isAlertsRoute = to === '/alerts';
                     return (
@@ -323,7 +303,7 @@ export default function Sidebar({ open, onClose }: { open: boolean; onClose: () 
                           )}
                         </NavLink>
 
-                        {/* Collapsed Mode Tooltip / Popover (Shows on hover/focus on desktop) */}
+                        {/* Collapsed Mode Tooltip */}
                         {sidebarCollapsed && (
                           <div
                             role="tooltip"
@@ -349,6 +329,66 @@ export default function Sidebar({ open, onClose }: { open: boolean; onClose: () 
               </div>
             );
           })}
+
+          {/* Divider before Settings */}
+          <div className={cx('border-t border-white/10 pt-3', sidebarCollapsed ? 'mx-1' : 'mx-0')}>
+            {/* Settings section label */}
+            <div className={cx('px-2 pb-1', sidebarCollapsed ? 'lg:hidden' : 'block')}>
+              <span className="text-[9px] font-bold tracking-[0.18em] uppercase text-white/30 flex items-center gap-1">
+                <Settings2 className="h-2.5 w-2.5" aria-hidden />
+                SETTINGS
+              </span>
+            </div>
+
+            {/* Settings items */}
+            <ul className="space-y-0.5" role="menu">
+              {settingsSection.items.map(({ to, label, icon: Icon }) => (
+                <li key={to} role="none" className="relative group">
+                  <NavLink
+                    to={to}
+                    role="menuitem"
+                    className={({ isActive }) =>
+                      cx(
+                        'flex items-center gap-2.5 rounded-lg text-[12px] font-medium transition-all duration-150 outline-none focus-visible:ring-2 focus-visible:ring-teal',
+                        sidebarCollapsed
+                          ? 'justify-center p-2.5 lg:w-full'
+                          : 'px-2.5 py-2 w-full',
+                        isActive
+                          ? 'bg-teal text-white font-semibold shadow-sm'
+                          : 'text-white/50 hover:text-white hover:bg-white/10'
+                      )
+                    }
+                  >
+                    {({ isActive }) => (
+                      <>
+                        <Icon
+                          className={cx(
+                            'h-4 w-4 shrink-0',
+                            isActive ? 'text-white' : 'text-teal-soft/60'
+                          )}
+                          aria-hidden
+                        />
+                        <span className={cx('truncate', sidebarCollapsed ? 'lg:hidden' : 'inline')}>
+                          {label}
+                        </span>
+                      </>
+                    )}
+                  </NavLink>
+
+                  {/* Collapsed tooltip */}
+                  {sidebarCollapsed && (
+                    <div
+                      role="tooltip"
+                      className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-2.5 z-50 hidden lg:group-hover:flex lg:group-focus-within:flex flex-col rounded-md bg-navy-dark px-2.5 py-1.5 text-xs text-white shadow-xl border border-white/15 whitespace-nowrap"
+                    >
+                      <span className="font-semibold text-teal-soft text-[10px] uppercase tracking-wider">Settings</span>
+                      <span className="font-medium text-white">{label}</span>
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
         </nav>
 
         {/* ── Footer: Mission Status & Profile ── */}
