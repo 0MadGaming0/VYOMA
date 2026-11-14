@@ -45,7 +45,7 @@ function InteractiveSlider({
           {label}
         </label>
         <span className="num text-xs font-bold text-teal-dark bg-white border border-line px-2 py-0.5 rounded shadow-sm">
-          {value}<span className="text-[10px] font-normal text-muted">{unit}</span>
+          {value}<span className="text-[11px] font-normal text-muted">{unit}</span>
         </span>
       </div>
       <input
@@ -57,7 +57,7 @@ function InteractiveSlider({
         onChange={(e) => onChange(+e.target.value)}
         className="w-full h-1.5 rounded-full bg-ghost cursor-pointer accent-teal"
       />
-      <div className="flex justify-between text-[10px] text-muted mt-1.5">
+      <div className="flex justify-between text-[11px] text-muted mt-1.5">
         <span>Low / Nominal</span>
         <span className="italic">{hint}</span>
         <span>High / Strained</span>
@@ -189,7 +189,7 @@ export default function MindSpace() {
                       )}
                     >
                       <Icon className={cx('h-5 w-5 mb-1', isSelected ? 'text-teal' : 'text-muted')} />
-                      <span className="text-[10px] leading-tight block truncate">{moodLabels[i]}</span>
+                      <span className="text-[11px] leading-tight block truncate">{moodLabels[i]}</span>
                     </button>
                   );
                 })}
@@ -301,7 +301,7 @@ export default function MindSpace() {
                   <li key={n.id} className="py-2.5 flex items-start justify-between gap-2 text-xs">
                     <div className="min-w-0 flex-1">
                       <p className="text-body leading-relaxed">{n.text}</p>
-                      <span className="text-[10px] text-muted font-mono">{timeAgo(n.time)}</span>
+                      <span className="text-[11px] text-muted font-mono">{timeAgo(n.time)}</span>
                     </div>
                     <button
                       type="button"

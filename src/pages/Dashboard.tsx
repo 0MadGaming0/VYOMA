@@ -252,7 +252,7 @@ export default function Dashboard() {
             {astronautCode.replace('AST-', '') || '01'}
           </div>
           <div>
-            <p className="text-[10px] uppercase font-bold tracking-wider text-muted">Active Subject</p>
+            <p className="text-[11px] uppercase font-bold tracking-wider text-muted">Active Subject</p>
             <p className="text-sm font-bold text-ink truncate max-w-[160px]">{astronautName}</p>
             <p className="text-[11px] font-mono text-muted">{astronautCode}</p>
           </div>
@@ -302,7 +302,11 @@ export default function Dashboard() {
           <div className="card p-4 flex flex-col justify-between">
             <div className="flex items-center justify-between text-muted mb-2">
               <span className="text-xs font-semibold text-muted uppercase tracking-wider">Vital Status</span>
-              <HealthStatusBadge status={vitalReadingStatus} />
+              {latest ? (
+                <HealthStatusBadge status={vitalReadingStatus} />
+              ) : (
+                <span className="inline-flex items-center rounded border border-border px-1.5 py-0.5 text-[11px] font-semibold text-muted bg-offwhite">No data</span>
+              )}
             </div>
             <div className="my-1">
               <p className={`font-display text-2xl font-bold ${vitalStatusColor}`}>
@@ -399,7 +403,7 @@ export default function Dashboard() {
           )}
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
           {/* Heart rate (BPM) */}
           <MetricCard
             label="Heart Rate"

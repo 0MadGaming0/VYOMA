@@ -380,7 +380,7 @@ export default function VitalWatch() {
       header: 'Triage Status',
       render: (r) => (
         <span
-          className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+          className={`px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider ${
             r.status === 'OPEN'
               ? 'bg-crit/10 text-crit border border-crit/20'
               : r.status === 'ACKNOWLEDGED'
@@ -462,7 +462,7 @@ export default function VitalWatch() {
           )}
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
           {/* Heart rate (BPM) */}
           <MetricCard
             label="Heart Rate"
@@ -732,7 +732,7 @@ export default function VitalWatch() {
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
                     </div>
-                    <p className="num mt-1.5 text-[10px] text-muted">
+                    <p className="num mt-1.5 text-[11px] text-muted">
                       {fmtDateTime(n.time, settings.hour12)}
                     </p>
                   </li>
@@ -858,7 +858,7 @@ export default function VitalWatch() {
                     value={formHr}
                     onChange={(e) => setFormHr(e.target.value)}
                   />
-                  <span className="text-[10px] text-muted mt-0.5 block">Alert if &lt;50 or &gt;120</span>
+                  <span className="text-[11px] text-muted mt-0.5 block">Alert if &lt;50 or &gt;120</span>
                 </div>
 
                 <div>
@@ -876,7 +876,7 @@ export default function VitalWatch() {
                     value={formSpo2}
                     onChange={(e) => setFormSpo2(e.target.value)}
                   />
-                  <span className="text-[10px] text-muted mt-0.5 block">Alert if &lt;90%</span>
+                  <span className="text-[11px] text-muted mt-0.5 block">Alert if &lt;90%</span>
                 </div>
 
                 <div>
@@ -894,7 +894,7 @@ export default function VitalWatch() {
                     value={formHrv}
                     onChange={(e) => setFormHrv(e.target.value)}
                   />
-                  <span className="text-[10px] text-muted mt-0.5 block">Autonomic buffer</span>
+                  <span className="text-[11px] text-muted mt-0.5 block">Autonomic buffer</span>
                 </div>
 
                 <div>
@@ -912,7 +912,7 @@ export default function VitalWatch() {
                     value={formTemp}
                     onChange={(e) => setFormTemp(e.target.value)}
                   />
-                  <span className="text-[10px] text-muted mt-0.5 block">Alert if &lt;35° or &gt;38°</span>
+                  <span className="text-[11px] text-muted mt-0.5 block">Alert if &lt;35° or &gt;38°</span>
                 </div>
 
                 <div>
@@ -962,7 +962,7 @@ export default function VitalWatch() {
                     value={formResp}
                     onChange={(e) => setFormResp(e.target.value)}
                   />
-                  <span className="text-[10px] text-muted mt-0.5 block">Alert if &lt;10 or &gt;25</span>
+                  <span className="text-[11px] text-muted mt-0.5 block">Alert if &lt;10 or &gt;25</span>
                 </div>
               </div>
 

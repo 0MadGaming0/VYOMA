@@ -450,11 +450,11 @@ export default function Settings() {
             badge={
               <div className="flex items-center gap-2">
                 {isBaselinesDirty ? (
-                  <span className="rounded-full bg-teal/15 px-2.5 py-0.5 text-[10px] font-bold text-teal-dark">
+                  <span className="rounded-full bg-teal/15 px-2.5 py-0.5 text-[11px] font-bold text-teal-dark">
                     Modified
                   </span>
                 ) : (
-                  <span className="rounded-full bg-ghost px-2.5 py-0.5 text-[10px] font-medium text-muted">
+                  <span className="rounded-full bg-ghost px-2.5 py-0.5 text-[11px] font-medium text-muted">
                     Reference Synced
                   </span>
                 )}
@@ -480,7 +480,7 @@ export default function Settings() {
                       <label htmlFor={`b-${cfg.key}`} className="text-xs font-bold text-ink block">
                         {cfg.label}
                       </label>
-                      <span className="text-[10px] font-mono text-muted bg-white border border-line px-1.5 py-0.5 rounded">
+                      <span className="text-[11px] font-mono text-muted bg-white border border-line px-1.5 py-0.5 rounded">
                         Nom: {cfg.referenceNominal}
                       </span>
                     </div>
@@ -550,7 +550,7 @@ export default function Settings() {
             subtitle="Live astronaut records from PostgreSQL database (astronaut_profiles table)."
             icon={User}
             badge={
-              <span className="rounded-full bg-teal/15 px-2.5 py-0.5 text-[10px] font-bold text-teal-dark">
+              <span className="rounded-full bg-teal/15 px-2.5 py-0.5 text-[11px] font-bold text-teal-dark">
                 {astronauts.length} Registered
               </span>
             }
@@ -576,13 +576,13 @@ export default function Settings() {
                       <div>
                         <div className="flex items-start justify-between gap-2 mb-1.5">
                           <div>
-                            <span className="font-mono text-[10px] font-bold text-teal-dark bg-teal/15 px-1.5 py-0.5 rounded">
+                            <span className="font-mono text-[11px] font-bold text-teal-dark bg-teal/15 px-1.5 py-0.5 rounded">
                               {astro.astronaut_code}
                             </span>
                             <h3 className="font-bold text-sm text-ink mt-1">{astro.name}</h3>
                           </div>
                           {isCurrent && (
-                            <span className="flex items-center gap-1 text-[10px] font-bold text-teal-dark bg-white border border-teal/30 px-2 py-0.5 rounded-full">
+                            <span className="flex items-center gap-1 text-[11px] font-bold text-teal-dark bg-white border border-teal/30 px-2 py-0.5 rounded-full">
                               <CheckCircle2 className="h-3 w-3 text-teal" /> Active
                             </span>
                           )}
@@ -591,7 +591,7 @@ export default function Settings() {
                         <div className="space-y-1 text-xs text-muted mt-2">
                           <p>Age: <strong className="text-ink">{astro.age ?? 'Not specified'}</strong></p>
                           <p>Mission: <strong className="text-ink font-mono">{astro.mission_id ?? 'None'}</strong></p>
-                          <p className="text-[10px]">Registered: {fmtDateTime(astro.created_at, settings.hour12)}</p>
+                          <p className="text-[11px]">Registered: {fmtDateTime(astro.created_at, settings.hour12)}</p>
                         </div>
                       </div>
 
@@ -633,7 +633,7 @@ export default function Settings() {
             icon={User}
             badge={
               isProfileDirty ? (
-                <span className="rounded-full bg-teal/15 px-2.5 py-0.5 text-[10px] font-bold text-teal-dark">
+                <span className="rounded-full bg-teal/15 px-2.5 py-0.5 text-[11px] font-bold text-teal-dark">
                   Modified
                 </span>
               ) : null
@@ -756,7 +756,7 @@ export default function Settings() {
                     value={newAstroCode}
                     onChange={(e) => setNewAstroCode(e.target.value)}
                   />
-                  <p className="mt-1 text-[10px] text-muted">Unique identifier (3-50 chars)</p>
+                  <p className="mt-1 text-[11px] text-muted">Unique identifier (3-50 chars)</p>
                 </div>
 
                 <div>
@@ -772,7 +772,7 @@ export default function Settings() {
                     value={newAstroName}
                     onChange={(e) => setNewAstroName(e.target.value)}
                   />
-                  <p className="mt-1 text-[10px] text-muted">Astronaut name (2-100 chars)</p>
+                  <p className="mt-1 text-[11px] text-muted">Astronaut name (2-100 chars)</p>
                 </div>
 
                 <div>
@@ -789,7 +789,7 @@ export default function Settings() {
                     value={newAstroAge}
                     onChange={(e) => setNewAstroAge(e.target.value)}
                   />
-                  <p className="mt-1 text-[10px] text-muted">18–100 years</p>
+                  <p className="mt-1 text-[11px] text-muted">18–100 years</p>
                 </div>
 
                 <div>
@@ -804,7 +804,7 @@ export default function Settings() {
                     value={newAstroMission}
                     onChange={(e) => setNewAstroMission(e.target.value)}
                   />
-                  <p className="mt-1 text-[10px] text-muted">Mission / expedition</p>
+                  <p className="mt-1 text-[11px] text-muted">Mission / expedition</p>
                 </div>
               </div>
 

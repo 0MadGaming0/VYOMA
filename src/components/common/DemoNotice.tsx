@@ -21,7 +21,7 @@ export default function DemoNotice({ text }: Props) {
               : 'Station cache mode · Operational telemetry simulation · Prototype triage rules')}
         </span>
       </div>
-      <span className="text-[10px] font-mono text-muted hidden sm:inline">NASA STD-3001 Reference Spec</span>
+      <span className="text-[11px] font-mono text-muted hidden sm:inline">NASA STD-3001 Reference Spec</span>
     </footer>
   );
 }

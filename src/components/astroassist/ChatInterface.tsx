@@ -132,7 +132,7 @@ export default function ChatInterface({ respond, suggestions, demo = true }: Pro
               )}
             >
               <p className="whitespace-pre-line">{m.text}</p>
-              <p className={cx('num mt-1.5 text-[10px]', m.role === 'user' ? 'text-white/60' : 'text-muted')}>
+              <p className={cx('num mt-1.5 text-[11px]', m.role === 'user' ? 'text-white/60' : 'text-muted')}>
                 {m.time}{m.demo && ' · synthetic response'}
               </p>
             </div>

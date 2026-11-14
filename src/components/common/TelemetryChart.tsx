@@ -36,7 +36,7 @@ export default function TelemetryChart({
             y={baseline}
             stroke="#6B8AA6"
             strokeDasharray="5 4"
-            label={{ value: 'Baseline', fill: '#6B8AA6', fontSize: 10, position: 'insideTopRight' }}
+            label={{ value: 'Baseline', fill: '#6B8AA6', fontSize: 11, position: 'insideTopRight' }}
           />
         )}
         <Area

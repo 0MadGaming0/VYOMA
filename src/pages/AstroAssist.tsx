@@ -85,7 +85,7 @@ export default function AstroAssist() {
                   <div>
                     <p className="text-xs text-muted">{c.label}</p>
                     <p className="num font-bold text-ink mt-0.5">{c.value}</p>
-                    <p className="text-[10px] text-muted">Baseline: {c.baseline}</p>
+                    <p className="text-[11px] text-muted">Baseline: {c.baseline}</p>
                   </div>
                   <HealthStatusBadge status={c.status} />
                 </li>

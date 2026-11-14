@@ -163,7 +163,7 @@ export default function Sidebar({ open, onClose }: { open: boolean; onClose: () 
             <VyomaSymbol size={28} />
             <div className={cx('leading-none transition-opacity duration-150', sidebarCollapsed ? 'lg:hidden' : 'block')}>
               <span className="font-display text-sm font-bold tracking-[0.16em] text-white block">VYOMA</span>
-              <span className="font-display text-[8px] font-semibold tracking-[0.22em] text-teal-soft block mt-0.5">SPACE HEALTH</span>
+              <span className="font-display text-[11px] font-semibold tracking-[0.22em] text-teal-soft block mt-0.5">SPACE HEALTH</span>
             </div>
           </div>
 
@@ -209,7 +209,7 @@ export default function Sidebar({ open, onClose }: { open: boolean; onClose: () 
             </div>
             {unack > 0 && (
               <span
-                className="grid h-4 min-w-4 place-items-center rounded-full bg-crit px-1 text-[9px] font-bold text-white leading-none shrink-0"
+                className="grid h-4 min-w-4 place-items-center rounded-full bg-crit px-1 text-[11px] font-bold text-white leading-none shrink-0"
                 title={`${unack} active alerts`}
               >
                 {unack}
@@ -235,7 +235,7 @@ export default function Sidebar({ open, onClose }: { open: boolean; onClose: () 
                 <div className={cx('px-2 pb-1', sidebarCollapsed ? 'lg:hidden' : 'block')}>
                   <span
                     className={cx(
-                      'text-[9px] font-bold tracking-[0.18em] uppercase',
+                      'text-[11px] font-bold tracking-[0.18em] uppercase',
                       hasActiveChild ? 'text-teal-soft' : 'text-white/35'
                     )}
                   >
@@ -255,7 +255,7 @@ export default function Sidebar({ open, onClose }: { open: boolean; onClose: () 
                           role="menuitem"
                           className={({ isActive }) =>
                             cx(
-                              'flex items-center gap-2.5 rounded-lg text-[12px] font-medium transition-all duration-150 outline-none focus-visible:ring-2 focus-visible:ring-teal',
+                              'flex items-center gap-2.5 rounded-lg text-[13px] font-medium transition-all duration-150 outline-none focus-visible:ring-2 focus-visible:ring-teal',
                               sidebarCollapsed
                                 ? 'justify-center p-2.5 lg:w-full'
                                 : 'px-2.5 py-2 w-full',
@@ -283,7 +283,7 @@ export default function Sidebar({ open, onClose }: { open: boolean; onClose: () 
                               {isAlertsRoute && unack > 0 && (
                                 <span
                                   className={cx(
-                                    'ml-auto grid h-4 min-w-4 place-items-center rounded-full px-1 text-[9px] font-bold shrink-0',
+                                    'ml-auto grid h-4 min-w-4 place-items-center rounded-full px-1 text-[11px] font-bold shrink-0',
                                     sidebarCollapsed ? 'lg:hidden' : 'inline-grid',
                                     isActive ? 'bg-white text-navy' : 'bg-crit text-white'
                                   )}
@@ -309,13 +309,13 @@ export default function Sidebar({ open, onClose }: { open: boolean; onClose: () 
                             role="tooltip"
                             className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-2.5 z-50 hidden lg:group-hover:flex lg:group-focus-within:flex flex-col rounded-md bg-navy-dark px-2.5 py-1.5 text-xs text-white shadow-xl border border-white/15 whitespace-nowrap animate-slideIn"
                           >
-                            <span className="font-semibold text-teal-soft text-[10px] uppercase tracking-wider">
+                            <span className="font-semibold text-teal-soft text-[11px] uppercase tracking-wider">
                               {section.title}
                             </span>
                             <span className="font-medium text-white flex items-center gap-1.5">
                               {label}
                               {isAlertsRoute && unack > 0 && (
-                                <span className="bg-crit text-white text-[9px] px-1 rounded-full font-bold">
+                                <span className="bg-crit text-white text-[11px] px-1 rounded-full font-bold">
                                   {unack}
                                 </span>
                               )}
@@ -334,7 +334,7 @@ export default function Sidebar({ open, onClose }: { open: boolean; onClose: () 
           <div className={cx('border-t border-white/10 pt-3', sidebarCollapsed ? 'mx-1' : 'mx-0')}>
             {/* Settings section label */}
             <div className={cx('px-2 pb-1', sidebarCollapsed ? 'lg:hidden' : 'block')}>
-              <span className="text-[9px] font-bold tracking-[0.18em] uppercase text-white/30 flex items-center gap-1">
+              <span className="text-[11px] font-bold tracking-[0.18em] uppercase text-white/30 flex items-center gap-1">
                 <Settings2 className="h-2.5 w-2.5" aria-hidden />
                 SETTINGS
               </span>
@@ -349,7 +349,7 @@ export default function Sidebar({ open, onClose }: { open: boolean; onClose: () 
                     role="menuitem"
                     className={({ isActive }) =>
                       cx(
-                        'flex items-center gap-2.5 rounded-lg text-[12px] font-medium transition-all duration-150 outline-none focus-visible:ring-2 focus-visible:ring-teal',
+                        'flex items-center gap-2.5 rounded-lg text-[13px] font-medium transition-all duration-150 outline-none focus-visible:ring-2 focus-visible:ring-teal',
                         sidebarCollapsed
                           ? 'justify-center p-2.5 lg:w-full'
                           : 'px-2.5 py-2 w-full',
@@ -381,7 +381,7 @@ export default function Sidebar({ open, onClose }: { open: boolean; onClose: () 
                       role="tooltip"
                       className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-2.5 z-50 hidden lg:group-hover:flex lg:group-focus-within:flex flex-col rounded-md bg-navy-dark px-2.5 py-1.5 text-xs text-white shadow-xl border border-white/15 whitespace-nowrap"
                     >
-                      <span className="font-semibold text-teal-soft text-[10px] uppercase tracking-wider">Settings</span>
+                      <span className="font-semibold text-teal-soft text-[11px] uppercase tracking-wider">Settings</span>
                       <span className="font-medium text-white">{label}</span>
                     </div>
                   )}
@@ -408,15 +408,15 @@ export default function Sidebar({ open, onClose }: { open: boolean; onClose: () 
             ) : null}
 
             <div className={cx(sidebarCollapsed ? 'lg:hidden' : 'block')}>
-              <div className="flex items-center justify-between text-[10px]">
+              <div className="flex items-center justify-between text-[11px]">
                 <span className="text-white/45 uppercase tracking-wider flex items-center gap-1 font-semibold">
                   <Rocket className="h-2.5 w-2.5 text-teal" /> {mission.id}
                 </span>
-                <span className="flex items-center gap-1 text-teal-soft font-medium text-[10px]">
+                <span className="flex items-center gap-1 text-teal-soft font-medium text-[11px]">
                   <span className="h-1.5 w-1.5 rounded-full bg-teal animate-pulseDot" /> Active
                 </span>
               </div>
-              <p className="text-[10px] text-white/60 truncate mt-0.5">{mission.phase}</p>
+              <p className="text-[11px] text-white/60 truncate mt-0.5">{mission.phase}</p>
             </div>
           </div>
 
@@ -433,7 +433,7 @@ export default function Sidebar({ open, onClose }: { open: boolean; onClose: () 
             </span>
             <div className={cx('min-w-0 flex-1', sidebarCollapsed ? 'lg:hidden' : 'block')}>
               <p className="truncate text-xs font-semibold text-white leading-tight">{profile.name}</p>
-              <p className="truncate text-[10px] text-white/50">{profile.role}</p>
+              <p className="truncate text-[11px] text-white/50">{profile.role}</p>
             </div>
           </div>
         </div>

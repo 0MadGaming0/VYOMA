@@ -57,7 +57,7 @@ export default function AlertCard({ alert: a, onAcknowledge, onResolve, compact,
           {/* Status Badge */}
           <span
             className={cx(
-              'px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider',
+              'px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider',
               statusUpper === 'OPEN' && 'bg-crit/10 text-crit border border-crit/20',
               statusUpper === 'ACKNOWLEDGED' && 'bg-warn/10 text-warn border border-warn/20',
               statusUpper === 'RESOLVED' && 'bg-teal/10 text-teal-dark border border-teal/20',
@@ -97,7 +97,7 @@ export default function AlertCard({ alert: a, onAcknowledge, onResolve, compact,
 
       {/* Audit Timestamps */}
       {(a.acknowledgedAt || a.resolvedAt) && (
-        <div className="mt-2 text-[10px] text-muted space-y-0.5 font-mono border-t border-line/40 pt-1.5">
+        <div className="mt-2 text-[11px] text-muted space-y-0.5 font-mono border-t border-line/40 pt-1.5">
           {a.acknowledgedAt && (
             <div>Ack: {fmtDateTime(a.acknowledgedAt, hour12)}</div>
           )}

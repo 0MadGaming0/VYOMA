@@ -69,7 +69,7 @@
      TYPOGRAPHY
   ══════════════════════════════════════════ */
   .label {
-    @apply text-[10px] font-semibold text-muted tracking-[0.12em] uppercase;
+    @apply text-[11px] font-semibold text-muted tracking-[0.12em] uppercase;
   }
   .label-sm {
     @apply text-[11px] font-medium text-muted uppercase tracking-wider;

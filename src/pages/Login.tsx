@@ -122,7 +122,7 @@ export default function Login() {
               <VyomaLogo size={32} />
             </div>
             <h1 className="font-display text-lg font-bold tracking-[0.14em] text-ink leading-tight">VYOMA</h1>
-            <p className="font-display text-[10px] font-semibold tracking-[0.24em] text-teal mt-0.5">SPACE HEALTH</p>
+            <p className="font-display text-[11px] font-semibold tracking-[0.24em] text-teal mt-0.5">SPACE HEALTH</p>
             <p className="text-[11px] text-muted mt-1.5">Astronaut Self-Monitoring &amp; Health Intelligence</p>
           </div>
 
@@ -182,7 +182,7 @@ export default function Login() {
                   <button
                     type="button"
                     onClick={() => setShowPass((v) => !v)}
-                    className="text-[10px] text-muted hover:text-teal flex items-center gap-1 font-medium transition-colors"
+                    className="text-[11px] text-muted hover:text-teal flex items-center gap-1 font-medium transition-colors"
                   >
                     {showPass ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
                     <span>{showPass ? 'Hide' : 'Show'}</span>
@@ -233,7 +233,7 @@ export default function Login() {
                   <Sparkles className="h-3.5 w-3.5 text-teal" />
                   <span>Fill Provisioned Crew Account</span>
                 </button>
-                <p className="text-[10px] text-muted text-center">
+                <p className="text-[11px] text-muted text-center">
                   Account: <span className="font-mono text-ink">testcrew@vyoma.space</span> / <span className="font-mono text-ink">AST-001</span>
                 </p>
               </div>
@@ -245,7 +245,7 @@ export default function Login() {
             <form onSubmit={handleRegister} className="space-y-3.5">
               <div>
                 <label htmlFor="reg-code" className="mb-1 block text-xs font-semibold text-body">
-                  Astronaut Code <span className="text-[10px] text-muted font-normal">(optional)</span>
+                  Astronaut Code <span className="text-[11px] text-muted font-normal">(optional)</span>
                 </label>
                 <input
                   id="reg-code"
@@ -256,7 +256,7 @@ export default function Login() {
                   autoComplete="off"
                   disabled={busy}
                 />
-                <p className="mt-1 text-[10px] text-muted">
+                <p className="mt-1 text-[11px] text-muted">
                   Custom or assigned code (e.g. AST-003). Auto-assigned if left blank.
                 </p>
               </div>
@@ -285,7 +285,7 @@ export default function Login() {
                   <button
                     type="button"
                     onClick={() => setShowRegPass((v) => !v)}
-                    className="text-[10px] text-muted hover:text-teal flex items-center gap-1 font-medium transition-colors"
+                    className="text-[11px] text-muted hover:text-teal flex items-center gap-1 font-medium transition-colors"
                   >
                     {showRegPass ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
                     <span>{showRegPass ? 'Hide' : 'Show'}</span>
@@ -314,7 +314,7 @@ export default function Login() {
                   <button
                     type="button"
                     onClick={() => setShowRegConfirm((v) => !v)}
-                    className="text-[10px] text-muted hover:text-teal flex items-center gap-1 font-medium transition-colors"
+                    className="text-[11px] text-muted hover:text-teal flex items-center gap-1 font-medium transition-colors"
                   >
                     {showRegConfirm ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
                     <span>{showRegConfirm ? 'Hide' : 'Show'}</span>
@@ -359,7 +359,7 @@ export default function Login() {
                 )}
               </button>
 
-              <p className="text-[10px] text-muted text-center pt-1">
+              <p className="text-[11px] text-muted text-center pt-1">
                 Your mission profile and telemetry feed will be automatically configured.
               </p>
             </form>

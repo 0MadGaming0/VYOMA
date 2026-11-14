@@ -102,7 +102,7 @@ export default function TopNavbar({ onMenu }: { onMenu: () => void }) {
             {titles[pathname] ?? 'VYOMA'}
           </h1>
         </div>
-        <p className="num hidden text-[10px] text-muted sm:block">
+        <p className="num hidden text-[11px] text-muted sm:block">
           {mission.id} · MET {elapsed(mission.startISO)}
         </p>
       </div>
@@ -157,7 +157,7 @@ export default function TopNavbar({ onMenu }: { onMenu: () => void }) {
           <p className="num text-xs font-semibold text-ink leading-tight">
             {fmtClock(now, settings.hour12)}
           </p>
-          <p className="text-[10px] text-muted">
+          <p className="text-[11px] text-muted">
             {now.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}
           </p>
         </div>
@@ -177,7 +177,7 @@ export default function TopNavbar({ onMenu }: { onMenu: () => void }) {
           >
             <Bell className="h-4 w-4" />
             {unack > 0 && (
-              <span className="num absolute -right-1 -top-1 grid h-4.5 min-w-4.5 place-items-center rounded-full bg-crit px-1 text-[10px] font-bold text-white shadow-sm">
+              <span className="num absolute -right-1 -top-1 grid h-4.5 min-w-4.5 place-items-center rounded-full bg-crit px-1 text-[11px] font-bold text-white shadow-sm">
                 {unack}
               </span>
             )}
@@ -197,12 +197,12 @@ export default function TopNavbar({ onMenu }: { onMenu: () => void }) {
             aria-label="User account and profile menu"
             className="flex items-center gap-2 rounded-lg border border-line px-2.5 py-1.5 hover:bg-offwhite hover:border-border-strong transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/30"
           >
-            <span className="grid h-6 w-6 place-items-center rounded-full bg-navy/10 text-[10px] font-bold text-navy font-display shrink-0">
+            <span className="grid h-6 w-6 place-items-center rounded-full bg-navy/10 text-[11px] font-bold text-navy font-display shrink-0">
               {initials}
             </span>
             <div className="text-left hidden sm:block">
               <span className="text-xs font-semibold text-ink block leading-tight">{profile.name}</span>
-              <span className="text-[10px] text-muted block leading-none">{profile.id}</span>
+              <span className="text-[11px] text-muted block leading-none">{profile.id}</span>
             </div>
           </button>
 
@@ -221,10 +221,10 @@ export default function TopNavbar({ onMenu }: { onMenu: () => void }) {
                   </span>
                   <div className="min-w-0">
                     <p className="text-xs font-bold text-ink truncate">{profile.name}</p>
-                    <p className="text-[10px] text-muted truncate">{profile.role}</p>
+                    <p className="text-[11px] text-muted truncate">{profile.role}</p>
                   </div>
                 </div>
-                <div className="mt-2 flex items-center justify-between text-[10px] bg-offwhite px-2 py-1 rounded border border-line">
+                <div className="mt-2 flex items-center justify-between text-[11px] bg-offwhite px-2 py-1 rounded border border-line">
                   <span className="text-muted">Station Call Sign:</span>
                   <span className="num font-semibold text-ink">{profile.id}</span>
                 </div>
@@ -248,7 +248,7 @@ export default function TopNavbar({ onMenu }: { onMenu: () => void }) {
                   <RefreshCw className="h-3.5 w-3.5 text-teal" />
                   <span>Telemetry Uplink Status</span>
                 </Link>
-                <div className="px-2.5 py-1 text-[10px] text-muted flex items-center gap-1.5">
+                <div className="px-2.5 py-1 text-[11px] text-muted flex items-center gap-1.5">
                   <Shield className="h-3 w-3 text-teal" />
                   <span>Session: {isAuthenticated ? 'Authenticated' : 'Offline Station Mode'}</span>
                 </div>

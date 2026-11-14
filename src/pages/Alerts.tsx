@@ -160,7 +160,7 @@ export default function Alerts() {
                 >
                   <span>{label}</span>
                   {k === 'OPEN' && openCount > 0 && (
-                    <span className="num ml-1 rounded-full bg-crit text-white px-1.5 py-0.2 text-[10px] font-bold">
+                    <span className="num ml-1 rounded-full bg-crit text-white px-1.5 py-0.2 text-[11px] font-bold">
                       {openCount}
                     </span>
                   )}
