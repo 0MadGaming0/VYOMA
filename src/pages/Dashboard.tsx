@@ -1,412 +1,520 @@
-import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Activity, ArrowRight, Droplets, HeartPulse, Moon, Radiation, Thermometer, Wind, AlertTriangle, ShieldCheck } from 'lucide-react';
-import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, ReferenceLine } from 'recharts';
+import { useEffect, useMemo, useState } from 'react';
+import {
+  Activity,
+  AlertTriangle,
+  Clock,
+  Database,
+  HeartPulse,
+  Thermometer,
+  Wind,
+} from 'lucide-react';
+import {
+  CartesianGrid,
+  Legend,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 import AlertCard from '../components/alerts/AlertCard';
 import ChartCard from '../components/common/ChartCard';
-import DemoNotice from '../components/common/DemoNotice';
 import EmptyState from '../components/common/EmptyState';
 import HealthStatusBadge from '../components/common/HealthStatusBadge';
 import MetricCard from '../components/common/MetricCard';
 import { useApp } from '../context/AppContext';
-import { currentVitals as v, envNow, mission, recentEvents, sleepWeek, spark, vitalSeries } from '../data/mockData';
-import { RANK, deviation, deviationStatus, elapsed, fmtClock, rangeStatus, tempUnit, timeAgo, toTemp } from '../utils';
-import { envRanges } from '../data/mockData';
+import { fmtDateTime, RANK, tempUnit, timeAgo, toTemp } from '../utils';
 import { grid, tick, tooltipProps, C_PRIMARY, C_SECONDARY } from '../utils/chart';
+import { getAstronautVitalHistory, getAstronautVitalSummary } from '../services/vitalService';
+import type { Status, VitalReading, VitalSummaryResponse } from '../types';
 
 export default function Dashboard() {
-  const { alerts, acknowledge, baselines: b, profile, settings } = useApp();
-  const [chartRange, setChartRange] = useState<'1H' | '6H' | '24H'>('24H');
-  const series = useMemo(() => vitalSeries(chartRange), [chartRange]);
-  
-  const active = alerts.filter((a) => !a.acknowledged).sort((x, y) => RANK[y.severity] - RANK[x.severity]);
-  const top = active[0];
-  const criticalCount = active.filter((a) => a.severity === 'critical').length;
-  const warningCount = active.filter((a) => a.severity === 'warning').length;
+  const {
+    alerts,
+    acknowledge,
+    resolveAlert,
+    profile,
+    settings,
+    selectedAstronaut,
+    apiConnected,
+  } = useApp();
 
-  const hour = new Date().getHours();
-  const greet = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
-  const st = (cur: number, base: number) => deviationStatus(deviation(cur, base));
-  
-  const flagged = active.filter((a) => a.severity !== 'info').length;
-  const overall = flagged === 0 ? 'All Systems Nominal' : criticalCount > 0 ? 'Critical Triage Action' : 'Monitor Physiological Drift';
-  const score = Math.max(40, 96 - active.reduce((n, a) => n + RANK[a.severity] * 3, 0));
-  
-  const lastSleep = sleepWeek[sleepWeek.length - 1];
-  const avgSleep = sleepWeek.reduce((n, d) => n + d.hours, 0) / sleepWeek.length;
-  const circ = 2 * Math.PI * 44;
-  const scoreColor = flagged === 0 ? '#2A9D8F' : criticalCount > 0 ? '#C0392B' : '#E8972D';
+  const [vitalSummary, setVitalSummary] = useState<VitalSummaryResponse | null>(null);
+  const [vitalHistory, setVitalHistory] = useState<VitalReading[]>([]);
+  const [isLoadingVitals, setIsLoadingVitals] = useState<boolean>(false);
+
+  // Fetch real vitals from backend when an astronaut is selected and API is connected
+  useEffect(() => {
+    let cancelled = false;
+    async function loadAstroVitals() {
+      if (!selectedAstronaut || !apiConnected) return;
+      setIsLoadingVitals(true);
+      try {
+        const [sum, hist] = await Promise.all([
+          getAstronautVitalSummary(selectedAstronaut.id),
+          getAstronautVitalHistory(selectedAstronaut.id, { limit: 50 }),
+        ]);
+        if (!cancelled) {
+          setVitalSummary(sum);
+          setVitalHistory(hist);
+        }
+      } catch (err) {
+        console.warn('Could not load astronaut vital telemetry:', err);
+      } finally {
+        if (!cancelled) setIsLoadingVitals(false);
+      }
+    }
+    loadAstroVitals();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedAstronaut, apiConnected]);
+
+  const latest = vitalSummary?.latest_reading;
+
+  // ── Header Metadata ──────────────────────────────────────────────────────────
+  const astronautName = selectedAstronaut?.name || profile.name || 'Crew Member';
+  const astronautCode = selectedAstronaut?.astronaut_code || profile.id || 'AST-001';
+  const missionId = selectedAstronaut?.mission_id || profile.crew || 'MISSION-2026';
+  const lastUpdateTime = latest?.recorded_at
+    ? fmtDateTime(latest.recorded_at, settings.hour12)
+    : 'Awaiting Telemetry';
+
+  // ── Active Alerts ────────────────────────────────────────────────────────────
+  const activeAlerts = useMemo(() => {
+    return alerts
+      .filter((a) => a.status !== 'RESOLVED' && !a.resolvedAt)
+      .sort((x, y) => RANK[y.severity] - RANK[x.severity]);
+  }, [alerts]);
+
+  const criticalCount = useMemo(
+    () => activeAlerts.filter((a) => a.severity === 'critical').length,
+    [activeAlerts]
+  );
+  const warningCount = useMemo(
+    () => activeAlerts.filter((a) => a.severity === 'warning').length,
+    [activeAlerts]
+  );
+  const openAlertsCount = useMemo(
+    () => activeAlerts.filter((a) => !a.acknowledged && (a.status === 'OPEN' || !a.status)).length,
+    [activeAlerts]
+  );
+
+  // ── 4 Vitals Evaluation (Heart Rate, SpO2, Temp, Resp) ──────────────────────
+  const hrStatus: Status = useMemo(() => {
+    if (latest?.heart_rate == null) return 'normal';
+    const hr = latest.heart_rate;
+    if (hr < 50 || hr > 110) return 'critical';
+    if (hr < 60 || hr > 100) return 'warning';
+    return 'normal';
+  }, [latest?.heart_rate]);
+
+  const spo2Status: Status = useMemo(() => {
+    if (latest?.spo2 == null) return 'normal';
+    const s = latest.spo2;
+    if (s < 90) return 'critical';
+    if (s < 95) return 'warning';
+    return 'normal';
+  }, [latest?.spo2]);
+
+  const tempStatus: Status = useMemo(() => {
+    if (latest?.body_temperature == null) return 'normal';
+    const t = latest.body_temperature;
+    if (t < 35.8 || t > 38.2) return 'critical';
+    if (t < 36.5 || t > 37.5) return 'warning';
+    return 'normal';
+  }, [latest?.body_temperature]);
+
+  const respStatus: Status = useMemo(() => {
+    if (latest?.respiratory_rate == null) return 'normal';
+    const r = latest.respiratory_rate;
+    if (r < 10 || r > 24) return 'critical';
+    if (r < 12 || r > 20) return 'warning';
+    return 'normal';
+  }, [latest?.respiratory_rate]);
+
+  // Overall Vital Reading Status
+  const vitalReadingStatus: Status = useMemo(() => {
+    if (!latest) return 'normal';
+    const statuses = [hrStatus, spo2Status, tempStatus, respStatus];
+    if (statuses.includes('critical')) return 'critical';
+    if (statuses.includes('warning')) return 'warning';
+    return 'normal';
+  }, [latest, hrStatus, spo2Status, tempStatus, respStatus]);
+
+  const vitalStatusLabel = useMemo(() => {
+    if (!latest) return 'No Data';
+    if (vitalReadingStatus === 'critical') return 'Critical';
+    if (vitalReadingStatus === 'warning') return 'Abnormal';
+    return 'Normal';
+  }, [latest, vitalReadingStatus]);
+
+  const vitalStatusColor = useMemo(() => {
+    if (!latest) return 'text-muted';
+    if (vitalReadingStatus === 'critical') return 'text-crit';
+    if (vitalReadingStatus === 'warning') return 'text-warn';
+    return 'text-teal-dark';
+  }, [latest, vitalReadingStatus]);
+
+  // Overall Health Status
+  const overallHealthStatus: Status = useMemo(() => {
+    if (criticalCount > 0) return 'critical';
+    if (warningCount > 0) return 'warning';
+    return 'normal';
+  }, [criticalCount, warningCount]);
+
+  const overallHealthLabel = useMemo(() => {
+    if (criticalCount > 0) return 'Critical';
+    if (warningCount > 0) return 'Warning';
+    return 'Nominal';
+  }, [criticalCount, warningCount]);
+
+  const overallHealthColor = useMemo(() => {
+    if (criticalCount > 0) return 'text-crit';
+    if (warningCount > 0) return 'text-warn';
+    return 'text-teal-dark';
+  }, [criticalCount, warningCount]);
+
+  // ── Historical Trend Data (Real backend data only) ───────────────────────────
+  const trendData = useMemo(() => {
+    if (!vitalHistory || vitalHistory.length === 0) return [];
+    return [...vitalHistory]
+      .filter((pt) => pt.heart_rate != null || pt.spo2 != null)
+      .sort((a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime())
+      .map((pt) => ({
+        time: pt.recorded_at,
+        label: new Date(pt.recorded_at).toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: settings.hour12,
+        }),
+        hr: pt.heart_rate ?? undefined,
+        spo2: pt.spo2 ?? undefined,
+      }));
+  }, [vitalHistory, settings.hour12]);
 
   return (
     <div className="space-y-6">
-      {/* ── Mission Header ── */}
-      <div className="flex flex-wrap items-center justify-between gap-4 pb-5 border-b border-line">
+      {/* ── 1. Header ── */}
+      <header className="flex flex-wrap items-center justify-between gap-4 pb-5 border-b border-line">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-teal/15 px-2.5 py-0.5 text-[11px] font-bold text-teal-dark border border-teal/30">
-              <span className="h-1.5 w-1.5 rounded-full bg-teal animate-pulseDot" />
-              Live Telemetry Stream
+          {/* Status Meta Bar */}
+          <div className="flex flex-wrap items-center gap-2 mb-1.5 text-xs">
+            {/* Backend Connection Status */}
+            <span
+              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-bold border ${
+                apiConnected
+                  ? 'bg-teal/10 text-teal-dark border-teal/30'
+                  : 'bg-warn/10 text-warn border-warn/30'
+              }`}
+            >
+              <span
+                className={`h-1.5 w-1.5 rounded-full ${
+                  apiConnected ? 'bg-teal animate-pulseDot' : 'bg-warn'
+                }`}
+              />
+              {apiConnected ? 'Backend Connected' : 'Offline / Standalone'}
             </span>
-            <span className="text-xs text-muted">·</span>
-            <span className="text-xs font-mono text-muted">{mission.id} Orbit Increment</span>
+
+            <span className="text-muted">·</span>
+
+            {/* Mission Identifier */}
+            <span className="font-mono text-xs text-muted">
+              Mission: <strong className="text-ink font-semibold">{missionId}</strong>
+            </span>
+
+            <span className="text-muted">·</span>
+
+            {/* Last Data Update Time */}
+            <span className="text-xs text-muted flex items-center gap-1">
+              <Clock className="h-3 w-3 text-muted" />
+              Last Update:{' '}
+              <strong className="text-ink font-mono font-medium">{lastUpdateTime}</strong>
+            </span>
           </div>
+
+          {/* Astronaut Name & ID */}
           <h1 className="font-display text-2xl font-bold text-ink sm:text-3xl tracking-tight">
-            {greet}, {profile.name}
+            {astronautName}
+            <span className="ml-2.5 font-mono text-sm font-semibold text-teal-dark bg-teal/10 px-2 py-0.5 rounded border border-teal/20 align-middle">
+              {astronautCode}
+            </span>
           </h1>
-          <p className="num mt-1 text-xs text-muted">
-            {mission.name} · {mission.phase} · MET {elapsed(mission.startISO)} · {fmtClock(new Date(), settings.hour12)}
+          <p className="text-xs text-muted mt-1">
+            Clinical astronaut telemetry &amp; health-monitoring dashboard
           </p>
         </div>
 
-        {/* Health score & Readiness ring */}
-        <div className="flex items-center gap-4 bg-white rounded-xl border border-line p-3 shadow-card">
-          <div className="relative h-16 w-16 shrink-0">
-            <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90" aria-hidden>
-              <circle cx="50" cy="50" r="44" fill="none" stroke="#EEF2F6" strokeWidth="8" />
-              <circle
-                cx="50" cy="50" r="44" fill="none"
-                stroke={scoreColor}
-                strokeWidth="8"
-                strokeLinecap="round"
-                strokeDasharray={circ}
-                strokeDashoffset={circ * (1 - score / 100)}
-                className="transition-all duration-700 ease-out"
-              />
-            </svg>
-            <div className="absolute inset-0 grid place-items-center text-center">
-              <div>
-                <p className="num text-lg font-bold text-ink leading-none">{score}</p>
-                <p className="text-[8px] uppercase tracking-wider text-muted font-bold mt-0.5">Readiness</p>
-              </div>
-            </div>
+        {/* Astronaut Quick Identity Card */}
+        <div className="flex items-center gap-3 bg-white rounded-xl border border-line p-3 shadow-card">
+          <div className="grid h-10 w-10 place-items-center rounded-lg bg-teal/10 border border-teal/20 text-teal-dark font-display font-bold">
+            {astronautCode.replace('AST-', '') || '01'}
           </div>
           <div>
-            <p className="label text-[10px] text-muted">Physiological State</p>
-            <p className="font-display text-base font-bold text-ink">{overall}</p>
-            <div className="flex items-center gap-2 mt-1 text-xs text-muted">
-              {criticalCount > 0 && (
-                <span className="font-bold text-crit flex items-center gap-1">
-                  <AlertTriangle className="h-3 w-3" /> {criticalCount} Critical
-                </span>
-              )}
-              {warningCount > 0 && (
-                <span className="font-medium text-warn flex items-center gap-1">
-                  {warningCount} Warning
-                </span>
-              )}
-              {flagged === 0 && (
-                <span className="font-semibold text-teal-dark flex items-center gap-1">
-                  <ShieldCheck className="h-3 w-3 text-teal" /> Optimal Stability
-                </span>
-              )}
-            </div>
+            <p className="text-[10px] uppercase font-bold tracking-wider text-muted">Active Subject</p>
+            <p className="text-sm font-bold text-ink truncate max-w-[160px]">{astronautName}</p>
+            <p className="text-[11px] font-mono text-muted">{astronautCode}</p>
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* ── High-Priority Critical Alert Banner ── */}
-      {top && top.severity !== 'info' && (
-        <aside
-          role="alert"
-          aria-live="assertive"
-          className={`flex items-center justify-between gap-3 rounded-xl border p-4 shadow-card transition-all ${
-            top.severity === 'critical'
-              ? 'border-crit/40 bg-crit/[0.04]'
-              : 'border-warn/40 bg-warn/[0.04]'
-          }`}
-        >
-          <div className="flex items-center gap-3 min-w-0">
-            <span
-              className={`h-3 w-3 shrink-0 rounded-full animate-pulseDot ${
-                top.severity === 'critical' ? 'bg-crit ring-4 ring-crit/20' : 'bg-warn ring-4 ring-warn/20'
-              }`}
-              aria-hidden
-            />
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
-                  top.severity === 'critical' ? 'bg-crit text-white' : 'bg-warn text-white'
-                }`}>
-                  {top.severity} Triage
-                </span>
-                <p className="text-sm font-bold text-ink truncate">{top.title}</p>
-              </div>
-              <p className="num text-xs text-muted truncate mt-0.5">
-                Observed: {top.observed} · Target: {top.baseline} · Logged {timeAgo(top.timestamp)}
+      {/* ── 2. Summary Cards ── */}
+      <section aria-label="Health and Telemetry Summary">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Astronaut Health Status */}
+          <div className="card p-4 flex flex-col justify-between">
+            <div className="flex items-center justify-between text-muted mb-2">
+              <span className="text-xs font-semibold text-muted uppercase tracking-wider">Health Status</span>
+              <HealthStatusBadge status={overallHealthStatus} />
+            </div>
+            <div className="my-1">
+              <p className={`font-display text-2xl font-bold ${overallHealthColor}`}>
+                {overallHealthLabel}
+              </p>
+              <p className="text-xs text-muted mt-0.5">
+                {criticalCount > 0
+                  ? `${criticalCount} critical alert(s) pending triage`
+                  : warningCount > 0
+                  ? `${warningCount} warning alert(s) logged`
+                  : 'All vitals within safety limits'}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              type="button"
-              onClick={() => acknowledge(top.id)}
-              className="btn-ghost text-xs bg-white border border-line px-3 py-1.5 hover:bg-offwhite"
-            >
-              Acknowledge
-            </button>
-            <Link
-              to="/alerts"
-              className="btn-primary text-xs px-3.5 py-1.5 flex items-center gap-1"
-            >
-              Open Triage <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          </div>
-        </aside>
-      )}
 
-      {/* ── Primary Vitals Grid (Standardized Heights) ── */}
-      <section aria-label="Vital Signs Metrics">
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {/* Total Open Alerts */}
+          <div className="card p-4 flex flex-col justify-between">
+            <div className="flex items-center justify-between text-muted mb-2">
+              <span className="text-xs font-semibold text-muted uppercase tracking-wider">Open Alerts</span>
+              <AlertTriangle className={`h-4 w-4 ${openAlertsCount > 0 ? 'text-crit' : 'text-teal'}`} />
+            </div>
+            <div className="my-1">
+              <p className="num text-2xl font-bold text-ink">
+                {openAlertsCount}
+              </p>
+              <p className="text-xs text-muted mt-0.5">
+                {openAlertsCount === 0 ? 'No unacknowledged alerts' : 'Requires medical review / triage'}
+              </p>
+            </div>
+          </div>
+
+          {/* Latest Vital Reading Status */}
+          <div className="card p-4 flex flex-col justify-between">
+            <div className="flex items-center justify-between text-muted mb-2">
+              <span className="text-xs font-semibold text-muted uppercase tracking-wider">Vital Status</span>
+              <HealthStatusBadge status={vitalReadingStatus} />
+            </div>
+            <div className="my-1">
+              <p className={`font-display text-2xl font-bold ${vitalStatusColor}`}>
+                {vitalStatusLabel}
+              </p>
+              <p className="text-xs text-muted mt-0.5">
+                {latest?.recorded_at ? `Recorded ${timeAgo(latest.recorded_at)}` : 'Awaiting baseline feed'}
+              </p>
+            </div>
+          </div>
+
+          {/* Total Readings Recorded */}
+          <div className="card p-4 flex flex-col justify-between">
+            <div className="flex items-center justify-between text-muted mb-2">
+              <span className="text-xs font-semibold text-muted uppercase tracking-wider">Total Readings</span>
+              <Database className="h-4 w-4 text-teal" />
+            </div>
+            <div className="my-1">
+              <p className="num text-2xl font-bold text-ink">
+                {vitalSummary?.total_readings ?? vitalHistory.length}
+              </p>
+              <p className="text-xs text-muted mt-0.5">
+                {isLoadingVitals ? 'Syncing...' : 'Historical telemetry records'}
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 3. Critical Alerts ── */}
+      <section aria-label="Critical and Active Alerts" className="card p-5">
+        <header className="flex items-center justify-between border-b border-line pb-3 mb-4">
+          <div className="flex items-center gap-2">
+            <div
+              className={`p-1.5 rounded-lg ${
+                criticalCount > 0
+                  ? 'bg-crit/10 text-crit'
+                  : warningCount > 0
+                  ? 'bg-warn/10 text-warn'
+                  : 'bg-teal/10 text-teal-dark'
+              }`}
+            >
+              <AlertTriangle className="h-4 w-4" />
+            </div>
+            <div>
+              <h2 className="font-display text-base font-bold text-ink">
+                Active Medical Alerts
+              </h2>
+              <p className="text-xs text-muted">
+                {activeAlerts.length === 0
+                  ? 'All physiological indicators within baseline thresholds'
+                  : `${activeAlerts.length} active alert(s) requiring medical review or action`}
+              </p>
+            </div>
+          </div>
+          {activeAlerts.length > 0 && (
+            <span className="font-mono text-xs text-muted">
+              {criticalCount} Critical · {warningCount} Warning
+            </span>
+          )}
+        </header>
+
+        {activeAlerts.length === 0 ? (
+          <EmptyState
+            title="No Active Alerts"
+            hint="All monitored physiological parameters are currently within baseline thresholds."
+          />
+        ) : (
+          <div className="grid gap-3 md:grid-cols-2">
+            {activeAlerts.map((a) => (
+              <AlertCard
+                key={a.id}
+                alert={a}
+                onAcknowledge={acknowledge}
+                onResolve={resolveAlert}
+                hour12={settings.hour12}
+              />
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* ── 4. Current Vital Signs (Display ONLY 4 metrics) ── */}
+      <section aria-label="Current Vital Signs">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h2 className="font-display text-base font-bold text-ink">Current Vital Signs</h2>
+            <p className="text-xs text-muted">Essential clinical telemetry parameters</p>
+          </div>
+          {latest?.recorded_at && (
+            <span className="text-xs text-muted font-mono">
+              Observed: {timeAgo(latest.recorded_at)}
+            </span>
+          )}
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {/* Heart rate (BPM) */}
           <MetricCard
             label="Heart Rate"
             icon={HeartPulse}
-            value={v.hr}
+            value={latest?.heart_rate != null ? Math.round(latest.heart_rate) : '—'}
             unit="BPM"
-            status={st(v.hr, b.restingHr)}
-            baseline={`${b.restingHr} BPM`}
-            spark={spark(66, 6)}
-            footnote="Resting Basal Pulse"
+            status={hrStatus}
+            baseline="Normal: 60–100 BPM"
+            footnote={
+              latest?.recorded_at
+                ? `Observed ${fmtDateTime(latest.recorded_at, settings.hour12)}`
+                : 'Awaiting sensor reading'
+            }
           />
+
+          {/* SpO₂ (%) */}
           <MetricCard
-            label="Oxygen Saturation (SpO2)"
+            label="Oxygen Saturation (SpO₂)"
             icon={Activity}
-            value={v.spo2}
+            value={latest?.spo2 != null ? Number(latest.spo2).toFixed(1) : '—'}
             unit="%"
-            status={st(v.spo2, b.spo2)}
-            baseline={`${b.spo2} %`}
-            spark={spark(97, 0.8)}
-            footnote="Continuous Pulse Oximetry"
+            status={spo2Status}
+            baseline="Normal: ≥ 95%"
+            footnote="Continuous pulse oximetry"
           />
+
+          {/* Body temperature (°C) */}
           <MetricCard
-            label="Blood Pressure"
-            icon={Droplets}
-            value={`${v.systolic}/${v.diastolic}`}
-            unit="mmHg"
-            status={st(v.systolic, b.systolic)}
-            baseline={`${b.systolic}/${b.diastolic}`}
-            spark={spark(121, 4)}
-            footnote="Oscillometric Arterial"
-          />
-          <MetricCard
-            label="Core Body Temperature"
+            label="Body Temperature"
             icon={Thermometer}
-            value={toTemp(v.temp, settings.units)}
+            value={
+              latest?.body_temperature != null
+                ? toTemp(latest.body_temperature, settings.units).toFixed(1)
+                : '—'
+            }
             unit={tempUnit(settings.units)}
-            status={st(v.temp, b.temp)}
-            baseline={`${toTemp(b.temp, settings.units)} ${tempUnit(settings.units)}`}
-            spark={spark(36.7, 0.15)}
-            footnote="Tympanic Thermoregulation"
+            status={tempStatus}
+            baseline={`Normal: ${toTemp(36.5, settings.units)}–${toTemp(37.5, settings.units)} ${tempUnit(settings.units)}`}
+            footnote="Core thermoregulation"
+          />
+
+          {/* Respiratory rate (/min) */}
+          <MetricCard
+            label="Respiratory Rate"
+            icon={Wind}
+            value={latest?.respiratory_rate != null ? Math.round(latest.respiratory_rate) : '—'}
+            unit="/min"
+            status={respStatus}
+            baseline="Normal: 12–20 /min"
+            footnote="Ventilation frequency"
           />
         </div>
       </section>
 
-      {/* ── Visual Prominence: Primary HR/HRV Telemetry Chart + Triage Alerts ── */}
-      <div className="grid gap-6 xl:grid-cols-5">
+      {/* ── 5. Vital Trends (Heart Rate & SpO₂ from backend) ── */}
+      <section aria-label="Vital Trends Chart">
         <ChartCard
-          className="xl:col-span-3"
-          title="Autonomic Cardiac &amp; HRV Telemetry"
-          subtitle="Real-time continuous correlation between Heart Rate (BPM) and Heart Rate Variability (rMSSD in ms)."
+          title="Vital Trends: Heart Rate &amp; SpO₂"
+          subtitle="Historical telemetry recordings retrieved directly from the space health database."
           height={300}
-          actions={
-            <div className="flex items-center gap-1 bg-offwhite border border-line rounded-lg p-0.5">
-              {(['1H', '6H', '24H'] as const).map((r) => (
-                <button
-                  key={r}
-                  type="button"
-                  onClick={() => setChartRange(r)}
-                  className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all ${
-                    chartRange === r ? 'bg-white text-navy shadow-sm' : 'text-muted hover:text-ink'
-                  }`}
-                >
-                  {r}
-                </button>
-              ))}
-            </div>
-          }
         >
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={series} margin={{ top: 10, right: 12, left: -10, bottom: 0 }}>
-              <CartesianGrid stroke={grid} strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="label" tick={tick} stroke={grid} minTickGap={32} />
-              <YAxis yAxisId="hr" tick={tick} stroke={grid} domain={['dataMin - 5', 'dataMax + 10']} />
-              <YAxis yAxisId="hrv" orientation="right" tick={tick} stroke={grid} domain={['dataMin - 10', 'dataMax + 10']} />
-              <Tooltip {...tooltipProps} />
-              <Legend wrapperStyle={{ fontSize: 12, color: '#16324F', paddingTop: 10 }} />
-              <ReferenceLine yAxisId="hr" y={b.restingHr} stroke="#2A9D8F" strokeDasharray="4 4" label={{ value: `Basal HR (${b.restingHr})`, fill: '#2A9D8F', fontSize: 10, position: 'insideTopLeft' }} />
-              <Line yAxisId="hr" type="monotone" dataKey="hr" name="Heart Rate (BPM)" stroke={C_PRIMARY} strokeWidth={2.5} dot={false} isAnimationActive={false} />
-              <Line yAxisId="hrv" type="monotone" dataKey="hrv" name="HRV rMSSD (ms)" stroke={C_SECONDARY} strokeWidth={2} dot={false} isAnimationActive={false} strokeDasharray="5 3" />
-            </LineChart>
-          </ResponsiveContainer>
+          {trendData.length === 0 ? (
+            <EmptyState
+              title="No Historical Readings"
+              hint="Historical trends will be graphed as telemetry readings are logged."
+            />
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={trendData} margin={{ top: 12, right: 16, left: -10, bottom: 0 }}>
+                <CartesianGrid stroke={grid} strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="label" tick={tick} stroke={grid} minTickGap={32} />
+                <YAxis
+                  yAxisId="hr"
+                  tick={tick}
+                  stroke={grid}
+                  domain={['dataMin - 5', 'dataMax + 5']}
+                  unit=" bpm"
+                />
+                <YAxis
+                  yAxisId="spo2"
+                  orientation="right"
+                  tick={tick}
+                  stroke={grid}
+                  domain={[80, 100]}
+                  unit="%"
+                />
+                <Tooltip {...tooltipProps} />
+                <Legend wrapperStyle={{ fontSize: 12, color: '#16324F', paddingTop: 8 }} />
+                <Line
+                  yAxisId="hr"
+                  type="monotone"
+                  dataKey="hr"
+                  name="Heart Rate (BPM)"
+                  stroke={C_PRIMARY}
+                  strokeWidth={2.5}
+                  dot={{ r: 3, fill: C_PRIMARY }}
+                  activeDot={{ r: 5 }}
+                  isAnimationActive={false}
+                />
+                <Line
+                  yAxisId="spo2"
+                  type="monotone"
+                  dataKey="spo2"
+                  name="Oxygen Saturation SpO₂ (%)"
+                  stroke={C_SECONDARY}
+                  strokeWidth={2.5}
+                  dot={{ r: 3, fill: C_SECONDARY }}
+                  activeDot={{ r: 5 }}
+                  isAnimationActive={false}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          )}
         </ChartCard>
-
-        {/* Active Alerts Panel */}
-        <section className="xl:col-span-2 card p-5 flex flex-col justify-between" aria-label="Active Triage Queue">
-          <div>
-            <div className="flex items-center justify-between border-b border-line pb-3 mb-3">
-              <div>
-                <h2 className="font-display text-sm font-bold text-ink">Active Triage Queue</h2>
-                <p className="text-xs text-muted">Priority medical and environmental alerts</p>
-              </div>
-              <Link to="/alerts" className="text-xs font-bold text-teal hover:text-teal-dark hover:underline flex items-center gap-1">
-                All Alerts ({alerts.length}) <ArrowRight className="h-3 w-3" />
-              </Link>
-            </div>
-
-            <div className="space-y-3">
-              {active.length === 0 ? (
-                <EmptyState title="Triage Queue Clear" hint="All physiological deviations nominal or acknowledged." />
-              ) : (
-                active.slice(0, 2).map((a) => (
-                  <AlertCard key={a.id} alert={a} compact onAcknowledge={acknowledge} hour12={settings.hour12} />
-                ))
-              )}
-            </div>
-          </div>
-
-          <div className="mt-4 pt-3 border-t border-line flex items-center justify-between text-xs text-muted">
-            <span>Flight Surgeon Triage Rulebook: <strong>Active</strong></span>
-            <span className="font-mono text-teal-dark font-semibold">Triage v4.2</span>
-          </div>
-        </section>
-      </div>
-
-      {/* ── Standardized Secondary Summary Row ── */}
-      <section aria-label="Physiological and Environmental Summaries">
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {/* Sleep Summary */}
-          <div className="card p-5 flex flex-col justify-between min-h-[190px]">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="label flex items-center gap-1.5">
-                  <Moon className="h-3.5 w-3.5 text-teal" aria-hidden />
-                  Sleep Architecture
-                </span>
-                <span className="text-[10px] font-bold text-teal-dark bg-teal/10 px-2 py-0.5 rounded-full">
-                  Circadian Ok
-                </span>
-              </div>
-              <p className="num text-2xl font-bold text-ink">
-                {lastSleep.hours}
-                <span className="ml-1 text-xs font-normal text-muted">hours (last sleep)</span>
-              </p>
-            </div>
-
-            <div className="border-t border-line pt-3 mt-3 space-y-1.5 text-xs">
-              <div className="flex justify-between items-center text-muted">
-                <span>7-Day Running Avg</span>
-                <span className="num font-bold text-ink">{avgSleep.toFixed(1)} hrs</span>
-              </div>
-              <div className="flex justify-between items-center text-muted">
-                <span>Sleep Quality Score</span>
-                <span className="num font-bold text-teal-dark">{lastSleep.quality}/5 (Restorative)</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Neurocognitive & Fatigue */}
-          <div className="card p-5 flex flex-col justify-between min-h-[190px]">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="label">Autonomic Load</span>
-                <span className="text-[10px] font-bold text-warn bg-warn/10 px-2 py-0.5 rounded-full">
-                  Moderate Fatigue
-                </span>
-              </div>
-              <div className="space-y-2 mt-2">
-                {[['Mental Stress Index', 6] as const, ['Physical Fatigue', 7] as const].map(([label, scoreVal]) => (
-                  <div key={label}>
-                    <div className="flex justify-between text-xs mb-1">
-                      <span className="font-medium text-body">{label}</span>
-                      <span className="num font-bold text-ink">{scoreVal}/10</span>
-                    </div>
-                    <div className="progress-bar">
-                      <div
-                        className="progress-fill"
-                        style={{
-                          width: `${scoreVal * 10}%`,
-                          background: scoreVal >= 7 ? '#E8972D' : '#2A9D8F',
-                        }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <p className="border-t border-line pt-2 text-[11px] text-muted">
-              Scheduled 45-min decompression protocol recommended.
-            </p>
-          </div>
-
-          {/* Habitat Environmental Telemetry */}
-          <div className="card p-5 flex flex-col justify-between min-h-[190px]">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="label flex items-center gap-1.5">
-                  <Wind className="h-3.5 w-3.5 text-teal" aria-hidden />
-                  Habitat Life Support
-                </span>
-                <span className="text-[10px] font-bold text-teal-dark bg-teal/10 px-2 py-0.5 rounded-full">
-                  ECLSS Nominal
-                </span>
-              </div>
-              <ul className="space-y-1.5 text-xs">
-                {([
-                  ['CO2 Partial Pressure', `${envNow.co2} ppm`, envRanges.co2, envNow.co2],
-                  ['Module Cabin Temp', `${toTemp(envNow.temp, settings.units)} ${tempUnit(settings.units)}`, envRanges.temp, envNow.temp],
-                  ['Radiation Dose Rate', `${envNow.radiation} mSv/d`, envRanges.radiation, envNow.radiation],
-                ] as const).map(([lbl, valStr, cfg, numVal]) => (
-                  <li key={lbl} className="flex items-center justify-between py-0.5">
-                    <span className="text-muted flex items-center gap-1">
-                      {lbl.includes('Radiation') && <Radiation className="h-3 w-3 text-muted" />}
-                      {lbl}
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <span className="num font-semibold text-ink">{valStr}</span>
-                      <HealthStatusBadge status={rangeStatus(numVal, cfg)} />
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <p className="border-t border-line pt-2 text-[11px] text-muted">
-              Cabin pressure: 101.3 kPa · O2: 21.0%
-            </p>
-          </div>
-
-          {/* Recent Mission Events */}
-          <div className="card p-5 flex flex-col justify-between min-h-[190px]">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="label">Telemetry Timeline</span>
-                <span className="text-[10px] text-muted font-mono">Real-time</span>
-              </div>
-              <ul className="space-y-2 text-xs">
-                {recentEvents.slice(0, 3).map((e) => (
-                  <li key={e.id} className="flex items-start gap-2">
-                    <span
-                      className={`mt-1 h-1.5 w-1.5 shrink-0 rounded-full ${
-                        e.type === 'critical' ? 'bg-crit' : e.type === 'warning' ? 'bg-warn' : 'bg-teal'
-                      }`}
-                      aria-hidden
-                    />
-                    <span className="flex-1 text-body line-clamp-1 leading-snug">{e.text}</span>
-                    <span className="num text-[10px] text-muted shrink-0">{timeAgo(e.time)}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="border-t border-line pt-2 flex items-center justify-between text-[11px] text-muted">
-              <span>Station Uplink Log</span>
-              <span className="text-teal-dark font-medium">Synced</span>
-            </div>
-          </div>
-        </div>
       </section>
-
-      <DemoNotice />
     </div>
   );
 }

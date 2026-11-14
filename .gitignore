@@ -13,6 +13,13 @@ dist
 dist-ssr
 *.local
 
+# Python
+venv/
+**/__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -27,8 +34,10 @@ dist-ssr
 # Environment
 .env
 .env.*
+backend/.env
+backend/.env.*
 !.env.example
+!backend/.env.example
 
 # Temporary / scratch
 *.tmp
-

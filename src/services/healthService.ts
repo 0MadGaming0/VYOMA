@@ -1,31 +1,35 @@
 import { api } from './api';
+import * as vitalService from './vitalService';
+import * as alertService from './alertService';
+import * as astronautService from './astronautService';
 
-// Endpoint paths follow the brief. Confirm payload shapes with the backend owner
-// before wiring them into pages, then add types in src/types.
-const get = <T = unknown>(url: string, params?: object) => api.get<T>(url, { params }).then((r) => r.data);
-const post = <T = unknown>(url: string, body?: object) => api.post<T>(url, body).then((r) => r.data);
+export { vitalService, alertService, astronautService };
 
-// Vitals
-export const getLatestVitals = () => get('/api/vitals/latest');
-export const getVitalsHistory = (range: string) => get('/api/vitals/history', { range });
-export const postVitals = (payload: object) => post('/api/vitals', payload);
+// System health checks
+export const getSystemHealth = async () => {
+  const res = await api.get<{ status: string; system: string; message: string }>('/api/health');
+  return res.data;
+};
 
-// Behavioral health
-export const getBehavioralHistory = () => get('/api/behavioral-health/history');
-export const postBehavioral = (payload: object) => post('/api/behavioral-health', payload);
+export const getDatabaseHealth = async () => {
+  const res = await api.get<{ status: string; database: string; message: string }>('/api/health/db');
+  return res.data;
+};
 
-// Environment
-export const getLatestEnvironment = () => get('/api/environment/latest');
-export const getEnvironmentHistory = () => get('/api/environment/history');
+// Re-export vital functions for backward compatibility
+export const getLatestVitals = async (astronautId?: number) => {
+  if (astronautId) {
+    return vitalService.getAstronautVitalSummary(astronautId);
+  }
+  return vitalService.getVitalReadings();
+};
 
-// Health analysis
-export const getLatestAnalysis = () => get('/api/health-analysis/latest');
-export const requestAnalysis = (payload: object) => post('/api/health-analysis', payload);
+export const getVitalsHistory = async (astronautId: number, limit = 50) => {
+  return vitalService.getAstronautVitalHistory(astronautId, { limit });
+};
 
-// AI assistant
-export const sendChat = (message: string) => post<{ reply: string }>('/api/assistant/chat', { message });
-export const getAssistantSummary = () => get('/api/assistant/summary');
+export const postVitals = vitalService.createVitalReading;
 
-// Synchronization
-export const getSyncStatus = () => get('/api/sync/status');
-export const startSync = () => post('/api/sync');
+// AI assistant chat (calls endpoint if available, otherwise handled by AstroAssist fallback)
+export const sendChat = (message: string) =>
+  api.post<{ reply: string }>('/api/assistant/chat', { message }).then((r) => r.data);

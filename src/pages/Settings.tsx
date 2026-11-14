@@ -1,14 +1,17 @@
 import { useState, useEffect, useMemo, type ReactNode } from 'react';
 import {
   Check, AlertCircle, RotateCcw, Save, Sliders, User, Radio,
-  SlidersHorizontal, Bell, Gauge, Heart, Activity, ShieldAlert
+  SlidersHorizontal, Bell, Gauge, Heart, Activity, ShieldAlert,
+  UserPlus, Trash2, CheckCircle2
 } from 'lucide-react';
 import PageHeader from '../components/common/PageHeader';
 import Toggle from '../components/common/Toggle';
 import { useApp } from '../context/AppContext';
 import { defaultBaselines, sensors } from '../data/mockData';
 import type { Baselines, Profile } from '../types';
-import { cx } from '../utils';
+import { cx, fmtDateTime } from '../utils';
+import { createAstronaut, deleteAstronaut, updateAstronaut } from '../services/astronautService';
+
 
 type SettingsTab = 'baselines' | 'profile' | 'sensors' | 'system';
 
@@ -131,7 +134,19 @@ function Card({
 }
 
 export default function Settings() {
-  const { profile, setProfile, baselines, setBaselines, settings, updateSettings } = useApp();
+  const {
+    profile,
+    setProfile,
+    baselines,
+    setBaselines,
+    settings,
+    updateSettings,
+    astronauts,
+    selectedAstronaut,
+    setSelectedAstronaut,
+    refreshAstronauts,
+    apiConnected,
+  } = useApp();
 
   const [activeTab, setActiveTab] = useState<SettingsTab>('baselines');
 
@@ -140,6 +155,16 @@ export default function Settings() {
   const [baselineForm, setBaselineForm] = useState<Record<keyof Baselines, string>>(() =>
     Object.fromEntries(Object.entries(baselines).map(([k, v]) => [k, String(v)])) as Record<keyof Baselines, string>
   );
+
+  // Astronaut management state
+  const [newAstroCode, setNewAstroCode] = useState('');
+  const [newAstroName, setNewAstroName] = useState('');
+  const [newAstroAge, setNewAstroAge] = useState('');
+  const [newAstroMission, setNewAstroMission] = useState('');
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [registerError, setRegisterError] = useState<string | null>(null);
+  const [registerSuccess, setRegisterSuccess] = useState<string | null>(null);
+
 
   const [sensorsState, setSensorsState] = useState<Record<string, boolean>>(() => {
     try {
@@ -212,14 +237,83 @@ export default function Settings() {
     showNotice('Physiological baselines restored to standard NASA astronaut reference values.');
   };
 
-  const handleSaveProfile = () => {
+  const handleSaveProfile = async () => {
     if (!profileForm.name.trim()) {
       showNotice('Crew member name cannot be blank.', 'warn');
       return;
     }
+    if (apiConnected && selectedAstronaut) {
+      try {
+        await updateAstronaut(selectedAstronaut.id, {
+          name: profileForm.name.trim(),
+          mission_id: profileForm.crew.trim() || null,
+        });
+        await refreshAstronauts();
+      } catch (err) {
+        console.warn('Failed to update astronaut in PostgreSQL:', err);
+      }
+    }
     setProfile(profileForm);
     showNotice('Astronaut profile credentials updated successfully.');
   };
+
+  const handleRegisterAstronaut = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setRegisterError(null);
+    setRegisterSuccess(null);
+
+    if (!newAstroCode.trim() || newAstroCode.trim().length < 3) {
+      setRegisterError('Astronaut Code must be at least 3 characters.');
+      return;
+    }
+    if (!newAstroName.trim() || newAstroName.trim().length < 2) {
+      setRegisterError('Name must be at least 2 characters.');
+      return;
+    }
+
+    const ageNum = newAstroAge ? parseInt(newAstroAge, 10) : null;
+    if (ageNum !== null && (ageNum < 18 || ageNum > 100)) {
+      setRegisterError('Age must be between 18 and 100.');
+      return;
+    }
+
+    setIsRegistering(true);
+    try {
+      const created = await createAstronaut({
+        astronaut_code: newAstroCode.trim().toUpperCase(),
+        name: newAstroName.trim(),
+        age: ageNum,
+        mission_id: newAstroMission.trim() || null,
+      });
+      setRegisterSuccess(`Astronaut ${created.name} (${created.astronaut_code}) registered successfully!`);
+      setNewAstroCode('');
+      setNewAstroName('');
+      setNewAstroAge('');
+      setNewAstroMission('');
+      await refreshAstronauts();
+      setSelectedAstronaut(created);
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+      setRegisterError(msg || 'Failed to register astronaut in database.');
+    } finally {
+      setIsRegistering(false);
+    }
+  };
+
+  const handleDeleteAstronaut = async (id: number, code: string) => {
+    if (!confirm(`Are you sure you want to remove astronaut profile ${code}?`)) {
+      return;
+    }
+    try {
+      await deleteAstronaut(id);
+      showNotice(`Astronaut ${code} deleted.`);
+      await refreshAstronauts();
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+      showNotice(msg || 'Cannot delete astronaut due to associated database records.', 'warn');
+    }
+  };
+
 
   const handleDiscardChanges = () => {
     setProfileForm(profile);
@@ -450,9 +544,92 @@ export default function Settings() {
       {/* ── TAB 2: ASTRONAUT PROFILE & STATION ── */}
       {activeTab === 'profile' && (
         <div className="space-y-6">
+          {/* Registered Crew Directory */}
+          <Card
+            title="Registered Astronaut Crew Directory"
+            subtitle="Live astronaut records from PostgreSQL database (astronaut_profiles table)."
+            icon={User}
+            badge={
+              <span className="rounded-full bg-teal/15 px-2.5 py-0.5 text-[10px] font-bold text-teal-dark">
+                {astronauts.length} Registered
+              </span>
+            }
+          >
+            {astronauts.length === 0 ? (
+              <p className="text-xs text-muted py-2">
+                No astronauts loaded yet. Register a new astronaut below or verify backend connection.
+              </p>
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {astronauts.map((astro) => {
+                  const isCurrent = selectedAstronaut?.id === astro.id;
+                  return (
+                    <div
+                      key={astro.id}
+                      className={cx(
+                        'rounded-xl border p-4 transition-all flex flex-col justify-between',
+                        isCurrent
+                          ? 'border-teal bg-teal/[0.04] shadow-sm'
+                          : 'border-line bg-offwhite/50 hover:bg-white'
+                      )}
+                    >
+                      <div>
+                        <div className="flex items-start justify-between gap-2 mb-1.5">
+                          <div>
+                            <span className="font-mono text-[10px] font-bold text-teal-dark bg-teal/15 px-1.5 py-0.5 rounded">
+                              {astro.astronaut_code}
+                            </span>
+                            <h3 className="font-bold text-sm text-ink mt-1">{astro.name}</h3>
+                          </div>
+                          {isCurrent && (
+                            <span className="flex items-center gap-1 text-[10px] font-bold text-teal-dark bg-white border border-teal/30 px-2 py-0.5 rounded-full">
+                              <CheckCircle2 className="h-3 w-3 text-teal" /> Active
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="space-y-1 text-xs text-muted mt-2">
+                          <p>Age: <strong className="text-ink">{astro.age ?? 'Not specified'}</strong></p>
+                          <p>Mission: <strong className="text-ink font-mono">{astro.mission_id ?? 'None'}</strong></p>
+                          <p className="text-[10px]">Registered: {fmtDateTime(astro.created_at, settings.hour12)}</p>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 pt-3 border-t border-line flex items-center justify-between gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedAstronaut(astro)}
+                          className={cx(
+                            'text-xs px-2.5 py-1 rounded font-semibold transition-all',
+                            isCurrent
+                              ? 'bg-teal text-white shadow-xs'
+                              : 'btn-ghost text-xs hover:bg-white border border-line'
+                          )}
+                        >
+                          {isCurrent ? 'Current Subject' : 'Select'}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteAstronaut(astro.id, astro.astronaut_code)}
+                          className="text-muted/60 hover:text-crit p-1 rounded transition-colors"
+                          title={`Delete ${astro.astronaut_code}`}
+                          aria-label={`Delete ${astro.astronaut_code}`}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </Card>
+
+          {/* Edit Astronaut Profile */}
           <Card
             title="Astronaut Operational Credentials"
-            subtitle="Flight surgeon records, operational role, call sign, and crew assignment."
+            subtitle="Update flight surgeon records, operational role, call sign, and crew assignment for the active astronaut."
             icon={User}
             badge={
               isProfileDirty ? (
@@ -498,16 +675,19 @@ export default function Settings() {
                 <input
                   id="prof-id"
                   type="text"
-                  className="input w-full font-mono"
+                  disabled={Boolean(selectedAstronaut)}
+                  className="input w-full font-mono disabled:opacity-60"
                   value={profileForm.id}
                   onChange={(e) => setProfileForm({ ...profileForm, id: e.target.value })}
                 />
-                <p className="mt-1 text-[11px] text-muted">Official NASA crew telemetry identifier.</p>
+                <p className="mt-1 text-[11px] text-muted">
+                  {selectedAstronaut ? 'Synced with database astronaut_code (read-only).' : 'Official NASA crew telemetry identifier.'}
+                </p>
               </div>
 
               <div>
                 <label className="mb-1 block text-xs font-bold text-ink" htmlFor="prof-crew">
-                  Expedition / Crew Unit
+                  Expedition / Mission ID
                 </label>
                 <input
                   id="prof-crew"
@@ -516,7 +696,7 @@ export default function Settings() {
                   value={profileForm.crew}
                   onChange={(e) => setProfileForm({ ...profileForm, crew: e.target.value })}
                 />
-                <p className="mt-1 text-[11px] text-muted">Assigned expedition increment or flight contingent.</p>
+                <p className="mt-1 text-[11px] text-muted">Assigned expedition increment or mission identifier.</p>
               </div>
             </div>
 
@@ -540,8 +720,109 @@ export default function Settings() {
               </button>
             </div>
           </Card>
+
+          {/* Register New Astronaut Form */}
+          <Card
+            title="Register New Astronaut Profile"
+            subtitle="Register an astronaut directly into PostgreSQL via POST /api/astronauts/."
+            icon={UserPlus}
+          >
+            {registerSuccess && (
+              <div className="mb-4 flex items-center gap-2 rounded-lg bg-teal/10 border border-teal/30 p-3 text-xs text-teal-dark font-medium">
+                <Check className="h-4 w-4 text-teal shrink-0" />
+                <span>{registerSuccess}</span>
+              </div>
+            )}
+
+            {registerError && (
+              <div className="mb-4 flex items-center gap-2 rounded-lg bg-crit/10 border border-crit/30 p-3 text-xs text-crit font-medium">
+                <AlertCircle className="h-4 w-4 text-crit shrink-0" />
+                <span>{registerError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleRegisterAstronaut} className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div>
+                  <label className="mb-1 block text-xs font-bold text-ink" htmlFor="new-code">
+                    Astronaut Code *
+                  </label>
+                  <input
+                    id="new-code"
+                    type="text"
+                    required
+                    placeholder="e.g. AST-002"
+                    className="input w-full font-mono"
+                    value={newAstroCode}
+                    onChange={(e) => setNewAstroCode(e.target.value)}
+                  />
+                  <p className="mt-1 text-[10px] text-muted">Unique identifier (3-50 chars)</p>
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-xs font-bold text-ink" htmlFor="new-name">
+                    Full Name *
+                  </label>
+                  <input
+                    id="new-name"
+                    type="text"
+                    required
+                    placeholder="e.g. Dr. Sunita Williams"
+                    className="input w-full"
+                    value={newAstroName}
+                    onChange={(e) => setNewAstroName(e.target.value)}
+                  />
+                  <p className="mt-1 text-[10px] text-muted">Astronaut name (2-100 chars)</p>
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-xs font-bold text-ink" htmlFor="new-age">
+                    Age
+                  </label>
+                  <input
+                    id="new-age"
+                    type="number"
+                    min="18"
+                    max="100"
+                    placeholder="e.g. 42"
+                    className="input w-full"
+                    value={newAstroAge}
+                    onChange={(e) => setNewAstroAge(e.target.value)}
+                  />
+                  <p className="mt-1 text-[10px] text-muted">18–100 years</p>
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-xs font-bold text-ink" htmlFor="new-mission">
+                    Mission ID
+                  </label>
+                  <input
+                    id="new-mission"
+                    type="text"
+                    placeholder="e.g. EXP-72"
+                    className="input w-full font-mono"
+                    value={newAstroMission}
+                    onChange={(e) => setNewAstroMission(e.target.value)}
+                  />
+                  <p className="mt-1 text-[10px] text-muted">Mission / expedition</p>
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-2 border-t border-line">
+                <button
+                  type="submit"
+                  disabled={isRegistering}
+                  className="btn-primary text-xs px-4 py-2 flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  <UserPlus className="h-3.5 w-3.5" />
+                  <span>{isRegistering ? 'Registering...' : 'Register Astronaut'}</span>
+                </button>
+              </div>
+            </form>
+          </Card>
         </div>
       )}
+
 
       {/* ── TAB 3: BIOSENSORS & TELEMETRY STREAM ── */}
       {activeTab === 'sensors' && (

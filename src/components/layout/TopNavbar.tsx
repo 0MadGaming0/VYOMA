@@ -22,11 +22,23 @@ const titles: Record<string, string> = {
 export default function TopNavbar({ onMenu }: { onMenu: () => void }) {
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const { alerts, profile, settings, logout, isAuthenticated } = useApp();
+  const {
+    alerts,
+    profile,
+    settings,
+    logout,
+    isAuthenticated,
+    astronauts,
+    selectedAstronaut,
+    setSelectedAstronaut,
+    apiConnected,
+    dbConnected,
+  } = useApp();
   const [tick, setTick] = useState(0);
   const [panel, setPanel] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
+
 
   useEffect(() => {
     const t = setInterval(() => setTick((n) => n + 1), 1000);
@@ -97,6 +109,49 @@ export default function TopNavbar({ onMenu }: { onMenu: () => void }) {
 
       {/* Right-aligned Command Tools */}
       <div className="ml-auto flex items-center gap-2 sm:gap-3">
+        {/* Backend Status Badge */}
+        <span
+          className={`hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border ${
+            apiConnected
+              ? dbConnected
+                ? 'bg-teal/10 text-teal-dark border-teal/30'
+                : 'bg-emerald-500/10 text-emerald-700 border-emerald-500/20'
+              : 'bg-amber-500/10 text-amber-700 border-amber-500/20'
+          }`}
+          title={
+            apiConnected
+              ? dbConnected
+                ? 'Backend & PostgreSQL 18 fully connected'
+                : 'FastAPI connected'
+              : 'Backend not reachable - showing local station cache'
+          }
+        >
+          <span className={`h-1.5 w-1.5 rounded-full ${apiConnected ? 'bg-teal animate-pulse' : 'bg-amber-500'}`} />
+          {apiConnected ? (dbConnected ? 'PostgreSQL Live' : 'API Live') : 'Station Cache'}
+        </span>
+
+        {/* Astronaut Selector */}
+        {astronauts.length > 0 && (
+          <div className="hidden md:flex items-center gap-1.5 bg-offwhite border border-line rounded-lg px-2.5 py-1 text-xs shadow-xs">
+            <span className="text-muted font-medium text-[11px]">Astronaut:</span>
+            <select
+              aria-label="Active Astronaut Telemetry Profile"
+              className="bg-transparent font-bold text-ink text-xs focus:outline-none cursor-pointer"
+              value={selectedAstronaut?.id ?? ''}
+              onChange={(e) => {
+                const astro = astronauts.find((a) => a.id === Number(e.target.value));
+                if (astro) setSelectedAstronaut(astro);
+              }}
+            >
+              {astronauts.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.astronaut_code} · {a.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
         {/* Real-time Chronometer */}
         <div className="hidden text-right md:block">
           <p className="num text-xs font-semibold text-ink leading-tight">
