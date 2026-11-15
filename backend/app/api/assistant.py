@@ -52,8 +52,8 @@ async def chat_with_assistant(
         db=db,
     )
 
-    # 2. If an external LLM is configured (e.g. Neon AI Gateway, OpenAI), try augmenting with frontier LLM
-    if os.environ.get("OPENAI_API_KEY") or os.environ.get("NEON_AI_GATEWAY_KEY"):
+    # 2. If an external LLM is configured (e.g. OpenAI, Gemini, Neon AI Gateway), try augmenting with frontier LLM
+    if os.environ.get("OPENAI_API_KEY") or os.environ.get("NEON_AI_GATEWAY_KEY") or os.environ.get("GEMINI_API_KEY"):
         ctx = local_response.context_used or {}
         vitals = ctx.get("latest_vitals", {})
         system_prompt = (

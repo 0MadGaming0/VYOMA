@@ -32,14 +32,26 @@ async def _try_external_llm(
     history: List[ChatMessage]
 ) -> Optional[str]:
     """
-    Attempts to call an external LLM via Neon AI Gateway, OpenAI, or Gemini if configured.
+    Attempts to call an external LLM via OpenAI, Google Gemini, or Neon AI Gateway.
     Falls back cleanly if keys are missing or requests fail.
     """
-    api_key = os.environ.get("OPENAI_API_KEY") or os.environ.get("NEON_AI_GATEWAY_KEY")
-    base_url = os.environ.get("NEON_AI_GATEWAY_URL") or os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1")
-    model = os.environ.get("AI_GATEWAY_MODEL", "gpt-4o-mini")
+    gemini_key = os.environ.get("GEMINI_API_KEY")
+    openai_key = os.environ.get("OPENAI_API_KEY")
+    neon_key = os.environ.get("NEON_AI_GATEWAY_KEY")
 
-    if not api_key:
+    if gemini_key and not openai_key and not neon_key:
+        api_key = gemini_key
+        base_url = os.environ.get("GEMINI_BASE_URL", "https://generativelanguage.googleapis.com/v1beta/openai")
+        model = os.environ.get("AI_MODEL", os.environ.get("AI_GATEWAY_MODEL", "gemini-1.5-flash"))
+    elif neon_key:
+        api_key = neon_key
+        base_url = os.environ.get("NEON_AI_GATEWAY_URL", "https://ai.neon.tech/v1")
+        model = os.environ.get("AI_MODEL", os.environ.get("AI_GATEWAY_MODEL", "gpt-4o-mini"))
+    elif openai_key:
+        api_key = openai_key
+        base_url = os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1")
+        model = os.environ.get("AI_MODEL", os.environ.get("AI_GATEWAY_MODEL", "gpt-4o-mini"))
+    else:
         return None
 
     try:
@@ -66,6 +78,8 @@ async def _try_external_llm(
             if resp.status_code == 200:
                 data = resp.json()
                 return data["choices"][0]["message"]["content"]
+            else:
+                print(f"[AstroAssist] LLM returned status {resp.status_code}: {resp.text[:120]}")
     except Exception as exc:
         print(f"[AstroAssist] External LLM call skipped/failed: {exc}")
 
