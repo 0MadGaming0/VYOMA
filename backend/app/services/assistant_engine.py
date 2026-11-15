@@ -32,14 +32,19 @@ async def _try_external_llm(
     history: List[ChatMessage]
 ) -> Optional[str]:
     """
-    Attempts to call an external LLM via OpenAI, Google Gemini, or Neon AI Gateway.
+    Attempts to call an external LLM via Groq, OpenAI, Google Gemini, or Neon AI Gateway.
     Falls back cleanly if keys are missing or requests fail.
     """
+    groq_key = os.environ.get("GROQ_API_KEY")
     gemini_key = os.environ.get("GEMINI_API_KEY")
     openai_key = os.environ.get("OPENAI_API_KEY")
     neon_key = os.environ.get("NEON_AI_GATEWAY_KEY")
 
-    if gemini_key and not openai_key and not neon_key:
+    if groq_key:
+        api_key = groq_key
+        base_url = os.environ.get("GROQ_BASE_URL", "https://api.groq.com/openai/v1")
+        model = os.environ.get("AI_MODEL", "llama-3.3-70b-versatile")
+    elif gemini_key and not openai_key and not neon_key:
         api_key = gemini_key
         base_url = os.environ.get("GEMINI_BASE_URL", "https://generativelanguage.googleapis.com/v1beta/openai")
         model = os.environ.get("AI_MODEL", os.environ.get("AI_GATEWAY_MODEL", "gemini-1.5-flash"))
