@@ -31,5 +31,21 @@ export const getVitalsHistory = async (astronautId: number, limit = 50) => {
 export const postVitals = vitalService.createVitalReading;
 
 // AI assistant chat (calls endpoint if available, otherwise handled by AstroAssist fallback)
-export const sendChat = (message: string) =>
-  api.post<{ reply: string }>('/api/assistant/chat', { message }).then((r) => r.data);
+export interface AssistantChatResponse {
+  reply: string;
+  astronaut_id?: number;
+  astronaut_code?: string;
+  context_used?: any;
+  suggested_actions?: string[];
+}
+
+export const sendChat = (
+  message: string,
+  astronautId?: number,
+  history?: Array<{ role: string; content: string }>
+): Promise<AssistantChatResponse> =>
+  api.post<AssistantChatResponse>('/api/assistant/chat', {
+    message,
+    astronaut_id: astronautId,
+    history,
+  }).then((r) => r.data);

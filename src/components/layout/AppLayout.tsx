@@ -4,6 +4,7 @@ import { FlaskConical } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import Sidebar from './Sidebar';
 import TopNavbar from './TopNavbar';
+import FloatingChatbot from '../chat/FloatingChatbot';
 import { cx } from '../../utils';
 
 export default function AppLayout() {
@@ -46,6 +47,9 @@ export default function AppLayout() {
           </div>
         </main>
       </div>
+
+      {/* Global Onboard Medical Intelligence Chatbot */}
+      <FloatingChatbot />
     </div>
   );
 }

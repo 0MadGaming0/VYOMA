@@ -10,6 +10,7 @@ from app.api.health import router as health_router
 from app.api.astronauts import router as astronaut_router
 from app.api.vitals import router as vitals_router
 from app.api.alerts import router as alerts_router
+from app.api.assistant import router as assistant_router
 from app.auth.router import router as auth_router
 from app.auth.mongodb import ensure_indexes, close_client
 
@@ -64,6 +65,7 @@ app.include_router(health_router)
 app.include_router(astronaut_router)
 app.include_router(vitals_router)
 app.include_router(alerts_router)
+app.include_router(assistant_router)
 
 
 @app.get("/")
