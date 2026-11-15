@@ -1,3 +1,4 @@
+import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -43,17 +44,34 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Enable CORS for frontend development
+# ── CORS Configuration ───────────────────────────────────────────────────────
+# Default local development origins
+DEV_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:4173",
+    "http://127.0.0.1:4173",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+
+# Parse production origins from CORS_ORIGINS env var (comma-separated)
+raw_cors = os.environ.get("CORS_ORIGINS", "")
+prod_origins: list[str] = []
+for entry in raw_cors.split(","):
+    cleaned = entry.strip()
+    # Explicitly disallow wildcard '*' to maintain allow_credentials=True compliance
+    if cleaned and cleaned != "*":
+        origin_val = cleaned.rstrip("/")
+        if origin_val and origin_val not in prod_origins:
+            prod_origins.append(origin_val)
+
+# Merge development and production origins (order-preserving deduplication)
+allowed_origins = list(dict.fromkeys(DEV_ORIGINS + prod_origins))
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:4173",
-        "http://127.0.0.1:4173",
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-    ],
+    allow_origins=allowed_origins,
     allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$",
     allow_credentials=True,
     allow_methods=["*"],
